@@ -6,6 +6,7 @@
     <div class="row">
       <div class="col-sm-4">
         {{select-picker content=simpleSearchContent
+                        selection=simpleSearchValue
                         multiple="true"
                         liveSearch="true"
                         optionGroupPath="group"
@@ -15,6 +16,7 @@
       <div class="col-sm-8">
 {{#highlight-code lang="handlebars"}}
 \{{select-picker content=simpleSearchContent
+                selection=simpleSearchValue
                 multiple="true"
                 liveSearch="true"
                 optionGroupPath="group"
@@ -34,6 +36,7 @@
     <div class="row">
       <div class="col-sm-4">
         {{select-picker content=advancedSearchContent
+                        selection=advancedSearchValue
                         multiple="true"
                         liveSearch="advanced"
                         optionGroupPath="group"
@@ -43,6 +46,7 @@
       <div class="col-sm-8">
 {{#highlight-code lang="handlebars"}}
 \{{select-picker content=advancedSearchContent
+                selection=advancedSearchValue
                 multiple="true"
                 liveSearch="advanced"
                 optionGroupPath="group"
@@ -61,7 +65,8 @@
   <div class="panel-body">
     <div class="row">
       <div class="col-sm-4">
-        {{list-picker content=advancedSearchContent
+        {{list-picker content=listSearchContent
+                      selection=listSearchValue
                       multiple="true"
                       liveSearch="advanced"
                       optionGroupPath="group"
@@ -71,6 +76,7 @@
       <div class="col-sm-8">
 {{#highlight-code lang="handlebars"}}
 \{{list-picker content=advancedSearchContent
+              selection=listSearchValue
               multiple="true"
               liveSearch="advanced"
               optionGroupPath="group"

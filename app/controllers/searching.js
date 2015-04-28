@@ -5,16 +5,19 @@ function popularity() {
 }
 
 function stateList() {
-  return chance.states()
-    .map(function(state) {
-      return {label: state.name, value: state.name, group: popularity()};
-    })
-    .sortBy('group', 'label');
+  return function() {
+    return chance.states()
+      .map(function(state) {
+        return {label: state.name, value: state.name, group: popularity()};
+      })
+      .sortBy('group', 'label');
+  }.property();
 }
 
 var SearchingController = Ember.Controller.extend({
   simpleSearchContent:   stateList(),
-  advancedSearchContent: stateList()
+  advancedSearchContent: stateList(),
+  listSearchContent:     stateList()
 });
 
 export default SearchingController;
