@@ -1,8 +1,51 @@
 <div class="panel panel-default">
   <div class="panel-heading">
-    TODO: Feature not implemented yet.
+    <h3 class="panel-title">Single Selection</h3>
   </div>
   <div class="panel-body">
-    <p>To help contribute see the <a href="https://github.com/sukima/ember-cli-select-picker/">GitHub Site</a>.</p>
+    <div class="row">
+      <div class="col-sm-4">
+        {{keyboard-select-picker content=singleContent
+                                 selection=singleValue
+                                 optionLabelPath="content.label"
+                                 optionValuePath="content.value"}}
+      </div>
+      <div class="col-sm-8">
+{{#highlight-code lang="handlebars"}}
+\{{keyboard-select-picker content=singleContent
+                         selection=singleValue
+                         optionLabelPath="content.label"
+                         optionValuePath="content.value"}}
+{{/highlight-code}}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">Multiple Selections</h3>
+  </div>
+  <div class="panel-body">
+    <div class="row">
+      <div class="col-sm-4">
+        {{keyboard-select-picker content=multipleContent
+                                 selection=multipleValue
+                                 multiple="true"
+                                 optionGroupPath="group"
+                                 optionLabelPath="content.label"
+                                 optionValuePath="content.value"}}
+      </div>
+      <div class="col-sm-8">
+{{#highlight-code lang="handlebars"}}
+\{{keyboard-select-picker content=multipleContent
+                         selection=multipleValue
+                         multiple="true"
+                         optionGroupPath="group"
+                         optionLabelPath="content.label"
+                         optionValuePath="content.value"}}
+{{/highlight-code}}
+      </div>
+    </div>
   </div>
 </div>
