@@ -15,16 +15,12 @@
 npm-debug.log
 testem.log
 
-# Not used for gh-pages
-dist/assets/failed.png
-dist/assets/passed.png
-dist/assets/test-loader.js
-dist/assets/test-support.css
-dist/assets/test-support.js
-dist/assets/test-select-picker.css
-dist/assets/test-select-picker.js
-dist/assets/vendor.css
-dist/assets/vendor.js
-dist/index.html
-dist/testem.js
-dist/tests/
+dist/*
+!dist/assets/test-select-picker-dist.css
+!dist/assets/test-select-picker-dist.js
+!dist/assets/vendor-dist.css
+!dist/assets/vendor-dist.js
+!dist/crossdomain.xml
+!dist/fonts/*
+!dist/robots.txt
+!dist/screen-shot.png
