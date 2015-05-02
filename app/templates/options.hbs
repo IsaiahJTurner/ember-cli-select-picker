@@ -1,0 +1,29 @@
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">Badges</h3>
+  </div>
+  <div class="panel-body">
+    <div class="row">
+      <div class="col-sm-4">
+        {{select-picker content=multipleContent
+                        selection=multipleValue
+                        multiple="true"
+                        showBadge="true"
+                        summaryMessage="Multiple items selected"
+                        optionLabelPath="content.label"
+                        optionValuePath="content.value"}}
+      </div>
+      <div class="col-sm-8">
+{{#highlight-code lang="handlebars"}}
+\{{select-picker content=multipleContent
+                selection=multipleValue
+                multiple="true"
+                showBadge="true"
+                summaryMessage="Multiple items selected"
+                optionLabelPath="content.label"
+                optionValuePath="content.value"}}
+{{/highlight-code}}
+      </div>
+    </div>
+  </div>
+</div>
