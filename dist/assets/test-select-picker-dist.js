@@ -38,27 +38,32 @@ define('test-select-picker/components/highlight-code', ['exports', 'ember'], fun
   exports['default'] = HighlightCodeComponent;
 
 });
-define('test-select-picker/components/keyboard-select-picker', ['exports', 'test-select-picker/components/select-picker', 'ember-cli-select-picker/mixins/keyboard-shortcuts'], function (exports, SelectPicker, KeyboardShortcutsMixin) {
+define('test-select-picker/components/keyboard-select-picker', ['exports', 'ember', 'test-select-picker/components/select-picker', 'ember-keyboard-shortcuts/mixins/component'], function (exports, Ember, SelectPicker, KeyboardShortcutsMixin) {
 
   'use strict';
 
-  // import Ember from 'ember';
-  // import SelectPickerMixin from 'ember-cli-select-picker/mixins/select-picker';
   var KeyboardSelectPickerComponent = SelectPicker['default'].extend(KeyboardShortcutsMixin['default'], {
 
     layoutName: 'components/select-picker',
 
-    activeCursor: 0,
+    nativeMobile: true,
 
-    activeIndex: (function () {
+    activeCursor: null,
+
+    classNames: ['select-picker', 'keyboard-select-picker'],
+
+    activeIndex: Ember['default'].computed('activeCursor', 'contentList.length', function () {
       var cursor = this.get('activeCursor');
+      if (Ember['default'].isNone(cursor)) {
+        return null;
+      }
       var len = this.get('contentList.length');
       return (cursor % len + len) % len;
-    }).property('activeCursor', 'contentList.length'),
+    }),
 
-    activeItem: (function () {
+    activeItem: Ember['default'].computed('activeIndex', 'contentList.[]', function () {
       return this.get('contentList').objectAt(this.get('activeIndex'));
-    }).property('activeIndex', 'contentList.[]'),
+    }),
 
     keyboardShortcuts: {
       enter: function enter() {
@@ -72,12 +77,29 @@ define('test-select-picker/components/keyboard-select-picker', ['exports', 'test
       esc: 'closeDropdown'
     },
 
+    groupedContentList: Ember['default'].computed('groupedContentListWithoutActive', 'activeIndex', function () {
+      var activeIndex = this.get('activeIndex');
+      var result = Ember['default'].A(this.get('groupedContentListWithoutActive'));
+      result.forEach(function (item, index) {
+        item.set('active', index === activeIndex);
+      });
+      return result;
+    }),
+
     actions: {
       activeNext: function activeNext() {
-        this.incrementProperty('activeCursor');
+        if (Ember['default'].isNone(this.get('activeCursor'))) {
+          this.set('activeCursor', 0);
+        } else {
+          this.incrementProperty('activeCursor');
+        }
       },
       activePrev: function activePrev() {
-        this.decrementProperty('activeCursor');
+        if (Ember['default'].isNone(this.get('activeCursor'))) {
+          this.set('activeCursor', -1);
+        } else {
+          this.decrementProperty('activeCursor');
+        }
       }
     }
   });
@@ -96,23 +118,26 @@ define('test-select-picker/components/list-picker', ['exports', 'ember', 'ember-
     selectAllLabel: 'Select All',
     selectNoneLabel: 'Select None',
 
+    nativeMobile: false,
+
     classNames: ['select-picker', 'list-picker'],
 
     groupedContentList: Ember['default'].computed('contentList.@each', function () {
       var groups = Ember['default'].A();
       var content = Ember['default'].A();
-      Ember['default'].A(this.get('contentList')).forEach(function (item) {
-        var header;
-        var groupIndex = groups.indexOf(item.group);
+      this.get('contentList').forEach(function (item) {
+        var header,
+            itemGroup = item.get('group');
+        var groupIndex = groups.indexOf(itemGroup);
         if (groupIndex < 0) {
-          header = item.group;
+          header = itemGroup;
           groups.push(header);
-          content.push({
+          content.push(Ember['default'].Object.create({
             header: header,
             items: Ember['default'].A([item])
-          });
+          }));
         } else {
-          content[groupIndex].items.push(item);
+          content[groupIndex].get('items').push(item);
         }
       });
       return content;
@@ -133,9 +158,18 @@ define('test-select-picker/components/select-picker', ['exports', 'ember', 'embe
     selectAllLabel: 'All',
     selectNoneLabel: 'None',
 
+    nativeMobile: true,
+
     classNames: ['select-picker'],
 
-    didInsertElement: function didInsertElement() {
+    badgeEnabled: Ember['default'].computed.and('showBadge', 'multiple'),
+    selectionBadge: Ember['default'].computed('selection.length', 'badgeEnabled', function () {
+      var enabled = this.get('badgeEnabled');
+      var selected = this.get('selection.length');
+      return enabled && selected && selected !== 0 ? selected : '';
+    }),
+
+    setupDom: Ember['default'].on('didInsertElement', function () {
       var eventName = 'click.' + this.get('elementId');
       var _this = this;
       $(document).on(eventName, function (e) {
@@ -147,24 +181,10 @@ define('test-select-picker/components/select-picker', ['exports', 'ember', 'embe
           _this.set('showDropdown', false);
         }
       });
-    },
+    }),
 
-    willDestroyElement: function willDestroyElement() {
+    teardownDom: Ember['default'].on('willDestroyElement', function () {
       $(document).off('.' + this.get('elementId'));
-    },
-
-    groupedContentList: Ember['default'].computed('contentList.@each', function () {
-      var lastGroup;
-      var result = Ember['default'].A(this.get('contentList')).map(function (item) {
-        var clonedItem = Ember['default'].copy(item);
-        if (clonedItem.group === lastGroup) {
-          clonedItem.group = null;
-        } else {
-          lastGroup = clonedItem.group;
-        }
-        return clonedItem;
-      });
-      return Ember['default'].A(result);
     }),
 
     actions: {
@@ -220,6 +240,66 @@ define('test-select-picker/controllers/index', ['exports', 'ember'], function (e
   });
 
   exports['default'] = IndexController;
+
+});
+define('test-select-picker/controllers/keyboard', ['exports', 'ember'], function (exports, Ember) {
+
+  'use strict';
+
+  function neighborhood() {
+    return chance.pick(['East side', 'West side']);
+  }
+
+  var KeyboardController = Ember['default'].Controller.extend({
+    singleContent: (function () {
+      return chance.unique(chance.street, 10).map(function (street) {
+        return { label: street, value: street };
+      });
+    }).property(),
+
+    multipleContent: (function () {
+      return chance.unique(chance.street, 10).map(function (street) {
+        return { label: street, value: street, group: neighborhood() };
+      }).sortBy('group');
+    }).property()
+  });
+
+  exports['default'] = KeyboardController;
+
+});
+define('test-select-picker/controllers/options', ['exports', 'ember'], function (exports, Ember) {
+
+  'use strict';
+
+  function neighborhood() {
+    return chance.pick(['East side', 'West side']);
+  }
+
+  exports['default'] = Ember['default'].Controller.extend({
+    prepMultipleValue: (function () {
+      console.log('hjfvhdfbej');
+      var sample = this.get('multipleContent').slice(0, 4);
+      this.set('multipleValue', sample);
+    }).on('init'),
+
+    singleContent: (function () {
+      return chance.unique(chance.street, 10).map(function (street) {
+        return { label: street, value: street };
+      });
+    }).property(),
+
+    multipleContent: (function () {
+      return chance.unique(chance.street, 10).map(function (street) {
+        return { label: street, value: street, group: neighborhood() };
+      }).sortBy('group');
+    }).property(),
+
+    listContent: (function () {
+      return chance.unique(chance.street, 10).map(function (street) {
+        return { label: street, value: street, group: neighborhood() };
+      }).sortBy('group');
+    }).property()
+  });
 
 });
 define('test-select-picker/controllers/searching', ['exports', 'ember'], function (exports, Ember) {
@@ -1415,8 +1495,8 @@ define('test-select-picker/templates/components/list-picker', ['exports'], funct
         var morph2 = dom.createMorphAt(element9,2,2);
         var morph3 = dom.createMorphAt(element9,3,3);
         dom.insertBoundary(fragment, 0);
-        inline(env, morph0, context, "view", ["select"], {"class": "native-select", "classNameBindings": "mobile:visible-xs-inline:hidden", "content": get(env, context, "content"), "selection": get(env, context, "selection"), "value": get(env, context, "value"), "title": get(env, context, "title"), "prompt": get(env, context, "prompt"), "multiple": get(env, context, "multiple"), "disabled": get(env, context, "disabled"), "optionGroupPath": get(env, context, "optionGroupPath"), "optionLabelPath": get(env, context, "optionLabelPath"), "optionValuePath": get(env, context, "optionValuePath")});
-        element(env, element9, context, "bind-attr", [], {"class": ":bs-select mobile:hidden-xs disabled:disabled"});
+        inline(env, morph0, context, "view", ["select"], {"class": "native-select", "classNameBindings": "nativeMobile:visible-xs-inline:hidden", "content": get(env, context, "content"), "selection": get(env, context, "selection"), "value": get(env, context, "value"), "title": get(env, context, "title"), "prompt": get(env, context, "prompt"), "multiple": get(env, context, "multiple"), "disabled": get(env, context, "disabled"), "optionGroupPath": get(env, context, "optionGroupPath"), "optionLabelPath": get(env, context, "optionLabelPath"), "optionValuePath": get(env, context, "optionValuePath")});
+        element(env, element9, context, "bind-attr", [], {"class": ":bs-select nativeMobile:hidden-xs disabled:disabled"});
         block(env, morph1, context, "if", [get(env, context, "liveSearch")], {}, child0, null);
         block(env, morph2, context, "if", [get(env, context, "multiple")], {}, child1, null);
         block(env, morph3, context, "each", [get(env, context, "groupedContentList")], {}, child2, null);
@@ -1846,13 +1926,18 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
         dom.appendChild(el2, el3);
         var el3 = dom.createElement("span");
         dom.setAttribute(el3,"class","pull-left");
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
         var el4 = dom.createComment("");
         dom.appendChild(el3, el4);
-        dom.appendChild(el2, el3);
-        var el3 = dom.createTextNode("\n    ");
-        dom.appendChild(el2, el3);
-        var el3 = dom.createElement("span");
-        dom.setAttribute(el3,"class","caret");
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("span");
+        var el5 = dom.createComment("");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n    ");
+        dom.appendChild(el3, el4);
         dom.appendChild(el2, el3);
         var el3 = dom.createTextNode("\n  ");
         dom.appendChild(el2, el3);
@@ -1902,24 +1987,29 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
         }
         var element8 = dom.childAt(fragment, [2]);
         var element9 = dom.childAt(element8, [1]);
-        var element10 = dom.childAt(element8, [3]);
+        var element10 = dom.childAt(element9, [1]);
+        var element11 = dom.childAt(element10, [3]);
+        var element12 = dom.childAt(element8, [3]);
         var morph0 = dom.createMorphAt(fragment,0,0,contextualElement);
-        var morph1 = dom.createMorphAt(dom.childAt(element9, [1]),0,0);
-        var morph2 = dom.createMorphAt(element10,1,1);
-        var morph3 = dom.createMorphAt(element10,2,2);
-        var morph4 = dom.createMorphAt(element10,3,3);
+        var morph1 = dom.createMorphAt(element10,1,1);
+        var morph2 = dom.createMorphAt(element11,0,0);
+        var morph3 = dom.createMorphAt(element12,1,1);
+        var morph4 = dom.createMorphAt(element12,2,2);
+        var morph5 = dom.createMorphAt(element12,3,3);
         dom.insertBoundary(fragment, 0);
-        inline(env, morph0, context, "view", ["select"], {"class": "native-select", "classNameBindings": "mobile:visible-xs-inline:hidden", "content": get(env, context, "content"), "selection": get(env, context, "selection"), "value": get(env, context, "value"), "title": get(env, context, "title"), "prompt": get(env, context, "prompt"), "multiple": get(env, context, "multiple"), "disabled": get(env, context, "disabled"), "optionGroupPath": get(env, context, "optionGroupPath"), "optionLabelPath": get(env, context, "optionLabelPath"), "optionValuePath": get(env, context, "optionValuePath")});
-        element(env, element8, context, "bind-attr", [], {"class": ":bs-select :btn-group :dropdown mobile:hidden-xs disabled:disabled showDropdown:open"});
+        inline(env, morph0, context, "view", ["select"], {"class": "native-select", "classNameBindings": "nativeMobile:visible-xs-inline:hidden", "content": get(env, context, "content"), "selection": get(env, context, "selection"), "value": get(env, context, "value"), "title": get(env, context, "title"), "prompt": get(env, context, "prompt"), "multiple": get(env, context, "multiple"), "disabled": get(env, context, "disabled"), "optionGroupPath": get(env, context, "optionGroupPath"), "optionLabelPath": get(env, context, "optionLabelPath"), "optionValuePath": get(env, context, "optionValuePath")});
+        element(env, element8, context, "bind-attr", [], {"class": ":bs-select :btn-group :dropdown nativeMobile:hidden-xs disabled:disabled showDropdown:open"});
         element(env, element9, context, "bind-attr", [], {"class": ":btn :btn-default :dropdown-toggle class"});
         element(env, element9, context, "bind-attr", [], {"id": get(env, context, "menuButtonId")});
         element(env, element9, context, "bind-attr", [], {"disabled": get(env, context, "disabled")});
         element(env, element9, context, "action", ["showHide"], {});
         content(env, morph1, context, "selectionSummary");
-        element(env, element10, context, "bind-attr", [], {"aria-labelledby": get(env, context, "menuButtonId")});
-        block(env, morph2, context, "if", [get(env, context, "liveSearch")], {}, child0, null);
-        block(env, morph3, context, "if", [get(env, context, "multiple")], {}, child1, null);
-        block(env, morph4, context, "each", [get(env, context, "groupedContentList")], {}, child2, null);
+        element(env, element11, context, "bind-attr", [], {"class": "selectionBadge:badge:caret"});
+        content(env, morph2, context, "selectionBadge");
+        element(env, element12, context, "bind-attr", [], {"aria-labelledby": get(env, context, "menuButtonId")});
+        block(env, morph3, context, "if", [get(env, context, "liveSearch")], {}, child0, null);
+        block(env, morph4, context, "if", [get(env, context, "multiple")], {}, child1, null);
+        block(env, morph5, context, "each", [get(env, context, "groupedContentList")], {}, child2, null);
         return fragment;
       }
     };
@@ -1940,7 +2030,7 @@ define('test-select-picker/templates/index', ['exports'], function (exports) {
         hasRendered: false,
         build: function build(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{{select-picker content=singleContent\n                selection=singleValue\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
+          var el1 = dom.createTextNode("{{select-picker content=singleContent\n                value=singleValue\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -2249,7 +2339,7 @@ define('test-select-picker/templates/index', ['exports'], function (exports) {
         var morph3 = dom.createMorphAt(dom.childAt(element1, [3]),1,1);
         var morph4 = dom.createMorphAt(dom.childAt(element2, [1]),1,1);
         var morph5 = dom.createMorphAt(dom.childAt(element2, [3]),1,1);
-        inline(env, morph0, context, "select-picker", [], {"content": get(env, context, "singleContent"), "selection": get(env, context, "singleValue"), "optionLabelPath": "content.label", "optionValuePath": "content.value"});
+        inline(env, morph0, context, "select-picker", [], {"content": get(env, context, "singleContent"), "value": get(env, context, "singleValue"), "optionLabelPath": "content.label", "optionValuePath": "content.value"});
         block(env, morph1, context, "highlight-code", [], {"lang": "handlebars"}, child0, null);
         inline(env, morph2, context, "select-picker", [], {"content": get(env, context, "multipleContent"), "selection": get(env, context, "multipleValue"), "multiple": "true", "optionGroupPath": "group", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
         block(env, morph3, context, "highlight-code", [], {"lang": "handlebars"}, child1, null);
@@ -2409,59 +2499,83 @@ define('test-select-picker/templates/install', ['exports'], function (exports) {
   }()));
 
 });
-define('test-select-picker/templates/keyboard-select-picker', ['exports'], function (exports) {
-
-  'use strict';
-
-  exports['default'] = Ember.HTMLBars.template((function() {
-    return {
-      isHTMLBars: true,
-      revision: "Ember@1.11.1",
-      blockParams: 0,
-      cachedFragment: null,
-      hasRendered: false,
-      build: function build(dom) {
-        var el0 = dom.createDocumentFragment();
-        var el1 = dom.createComment("");
-        dom.appendChild(el0, el1);
-        var el1 = dom.createTextNode("\n");
-        dom.appendChild(el0, el1);
-        return el0;
-      },
-      render: function render(context, env, contextualElement) {
-        var dom = env.dom;
-        var hooks = env.hooks, content = hooks.content;
-        dom.detectNamespace(contextualElement);
-        var fragment;
-        if (env.useFragmentCache && dom.canClone) {
-          if (this.cachedFragment === null) {
-            fragment = this.build(dom);
-            if (this.hasRendered) {
-              this.cachedFragment = fragment;
-            } else {
-              this.hasRendered = true;
-            }
-          }
-          if (this.cachedFragment) {
-            fragment = dom.cloneNode(this.cachedFragment, true);
-          }
-        } else {
-          fragment = this.build(dom);
-        }
-        var morph0 = dom.createMorphAt(fragment,0,0,contextualElement);
-        dom.insertBoundary(fragment, 0);
-        content(env, morph0, context, "yield");
-        return fragment;
-      }
-    };
-  }()));
-
-});
 define('test-select-picker/templates/keyboard', ['exports'], function (exports) {
 
   'use strict';
 
   exports['default'] = Ember.HTMLBars.template((function() {
+    var child0 = (function() {
+      return {
+        isHTMLBars: true,
+        revision: "Ember@1.11.1",
+        blockParams: 0,
+        cachedFragment: null,
+        hasRendered: false,
+        build: function build(dom) {
+          var el0 = dom.createDocumentFragment();
+          var el1 = dom.createTextNode("{{keyboard-select-picker content=singleContent\n                         value=singleValue\n                         optionLabelPath=\"content.label\"\n                         optionValuePath=\"content.value\"}}\n");
+          dom.appendChild(el0, el1);
+          return el0;
+        },
+        render: function render(context, env, contextualElement) {
+          var dom = env.dom;
+          dom.detectNamespace(contextualElement);
+          var fragment;
+          if (env.useFragmentCache && dom.canClone) {
+            if (this.cachedFragment === null) {
+              fragment = this.build(dom);
+              if (this.hasRendered) {
+                this.cachedFragment = fragment;
+              } else {
+                this.hasRendered = true;
+              }
+            }
+            if (this.cachedFragment) {
+              fragment = dom.cloneNode(this.cachedFragment, true);
+            }
+          } else {
+            fragment = this.build(dom);
+          }
+          return fragment;
+        }
+      };
+    }());
+    var child1 = (function() {
+      return {
+        isHTMLBars: true,
+        revision: "Ember@1.11.1",
+        blockParams: 0,
+        cachedFragment: null,
+        hasRendered: false,
+        build: function build(dom) {
+          var el0 = dom.createDocumentFragment();
+          var el1 = dom.createTextNode("{{keyboard-select-picker content=multipleContent\n                         selection=multipleValue\n                         multiple=\"true\"\n                         optionGroupPath=\"group\"\n                         optionLabelPath=\"content.label\"\n                         optionValuePath=\"content.value\"}}\n");
+          dom.appendChild(el0, el1);
+          return el0;
+        },
+        render: function render(context, env, contextualElement) {
+          var dom = env.dom;
+          dom.detectNamespace(contextualElement);
+          var fragment;
+          if (env.useFragmentCache && dom.canClone) {
+            if (this.cachedFragment === null) {
+              fragment = this.build(dom);
+              if (this.hasRendered) {
+                this.cachedFragment = fragment;
+              } else {
+                this.hasRendered = true;
+              }
+            }
+            if (this.cachedFragment) {
+              fragment = dom.cloneNode(this.cachedFragment, true);
+            }
+          } else {
+            fragment = this.build(dom);
+          }
+          return fragment;
+        }
+      };
+    }());
     return {
       isHTMLBars: true,
       revision: "Ember@1.11.1",
@@ -2476,7 +2590,14 @@ define('test-select-picker/templates/keyboard', ['exports'], function (exports) 
         dom.appendChild(el1, el2);
         var el2 = dom.createElement("div");
         dom.setAttribute(el2,"class","panel-heading");
-        var el3 = dom.createTextNode("\n    TODO: Feature not implemented yet.\n  ");
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("h3");
+        dom.setAttribute(el3,"class","panel-title");
+        var el4 = dom.createTextNode("Setup");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
+        var el3 = dom.createTextNode("\n  ");
         dom.appendChild(el2, el3);
         dom.appendChild(el1, el2);
         var el2 = dom.createTextNode("\n  ");
@@ -2486,14 +2607,138 @@ define('test-select-picker/templates/keyboard', ['exports'], function (exports) 
         var el3 = dom.createTextNode("\n    ");
         dom.appendChild(el2, el3);
         var el3 = dom.createElement("p");
-        var el4 = dom.createTextNode("To help contribute see the ");
+        var el4 = dom.createTextNode("To use keyboard support you first need to install the ");
         dom.appendChild(el3, el4);
         var el4 = dom.createElement("a");
-        dom.setAttribute(el4,"href","https://github.com/sukima/ember-cli-select-picker/");
-        var el5 = dom.createTextNode("GitHub Site");
+        dom.setAttribute(el4,"href","https://www.npmjs.com/package/ember-keyboard-shortcuts");
+        var el5 = dom.createElement("code");
+        var el6 = dom.createTextNode("ember-keyboard-shortcuts");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode(" addon");
         dom.appendChild(el4, el5);
         dom.appendChild(el3, el4);
-        var el4 = dom.createTextNode(".");
+        var el4 = dom.createTextNode(" to your applicaiton project.");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("pre");
+        var el4 = dom.createTextNode("$ ember install ember-keyboard-shortcuts");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
+        var el3 = dom.createTextNode("\n  ");
+        dom.appendChild(el2, el3);
+        dom.appendChild(el1, el2);
+        var el2 = dom.createTextNode("\n");
+        dom.appendChild(el1, el2);
+        dom.appendChild(el0, el1);
+        var el1 = dom.createTextNode("\n\n");
+        dom.appendChild(el0, el1);
+        var el1 = dom.createElement("div");
+        dom.setAttribute(el1,"class","panel panel-default");
+        var el2 = dom.createTextNode("\n  ");
+        dom.appendChild(el1, el2);
+        var el2 = dom.createElement("div");
+        dom.setAttribute(el2,"class","panel-heading");
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("h3");
+        dom.setAttribute(el3,"class","panel-title");
+        var el4 = dom.createTextNode("Single Selection");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
+        var el3 = dom.createTextNode("\n  ");
+        dom.appendChild(el2, el3);
+        dom.appendChild(el1, el2);
+        var el2 = dom.createTextNode("\n  ");
+        dom.appendChild(el1, el2);
+        var el2 = dom.createElement("div");
+        dom.setAttribute(el2,"class","panel-body");
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("div");
+        dom.setAttribute(el3,"class","row");
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("div");
+        dom.setAttribute(el4,"class","col-sm-4");
+        var el5 = dom.createTextNode("\n        ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createComment("");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n      ");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("div");
+        dom.setAttribute(el4,"class","col-sm-8");
+        var el5 = dom.createTextNode("\n");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createComment("");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("      ");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n    ");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
+        var el3 = dom.createTextNode("\n  ");
+        dom.appendChild(el2, el3);
+        dom.appendChild(el1, el2);
+        var el2 = dom.createTextNode("\n");
+        dom.appendChild(el1, el2);
+        dom.appendChild(el0, el1);
+        var el1 = dom.createTextNode("\n\n");
+        dom.appendChild(el0, el1);
+        var el1 = dom.createElement("div");
+        dom.setAttribute(el1,"class","panel panel-default");
+        var el2 = dom.createTextNode("\n  ");
+        dom.appendChild(el1, el2);
+        var el2 = dom.createElement("div");
+        dom.setAttribute(el2,"class","panel-heading");
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("h3");
+        dom.setAttribute(el3,"class","panel-title");
+        var el4 = dom.createTextNode("Multiple Selections");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
+        var el3 = dom.createTextNode("\n  ");
+        dom.appendChild(el2, el3);
+        dom.appendChild(el1, el2);
+        var el2 = dom.createTextNode("\n  ");
+        dom.appendChild(el1, el2);
+        var el2 = dom.createElement("div");
+        dom.setAttribute(el2,"class","panel-body");
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("div");
+        dom.setAttribute(el3,"class","row");
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("div");
+        dom.setAttribute(el4,"class","col-sm-4");
+        var el5 = dom.createTextNode("\n        ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createComment("");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n      ");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("div");
+        dom.setAttribute(el4,"class","col-sm-8");
+        var el5 = dom.createTextNode("\n");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createComment("");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("      ");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n    ");
         dom.appendChild(el3, el4);
         dom.appendChild(el2, el3);
         var el3 = dom.createTextNode("\n  ");
@@ -2508,6 +2753,7 @@ define('test-select-picker/templates/keyboard', ['exports'], function (exports) 
       },
       render: function render(context, env, contextualElement) {
         var dom = env.dom;
+        var hooks = env.hooks, get = hooks.get, inline = hooks.inline, block = hooks.block;
         dom.detectNamespace(contextualElement);
         var fragment;
         if (env.useFragmentCache && dom.canClone) {
@@ -2525,6 +2771,155 @@ define('test-select-picker/templates/keyboard', ['exports'], function (exports) 
         } else {
           fragment = this.build(dom);
         }
+        var element0 = dom.childAt(fragment, [2, 3, 1]);
+        var element1 = dom.childAt(fragment, [4, 3, 1]);
+        var morph0 = dom.createMorphAt(dom.childAt(element0, [1]),1,1);
+        var morph1 = dom.createMorphAt(dom.childAt(element0, [3]),1,1);
+        var morph2 = dom.createMorphAt(dom.childAt(element1, [1]),1,1);
+        var morph3 = dom.createMorphAt(dom.childAt(element1, [3]),1,1);
+        inline(env, morph0, context, "keyboard-select-picker", [], {"content": get(env, context, "singleContent"), "value": get(env, context, "singleValue"), "optionLabelPath": "content.label", "optionValuePath": "content.value"});
+        block(env, morph1, context, "highlight-code", [], {"lang": "handlebars"}, child0, null);
+        inline(env, morph2, context, "keyboard-select-picker", [], {"content": get(env, context, "multipleContent"), "selection": get(env, context, "multipleValue"), "multiple": "true", "optionGroupPath": "group", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
+        block(env, morph3, context, "highlight-code", [], {"lang": "handlebars"}, child1, null);
+        return fragment;
+      }
+    };
+  }()));
+
+});
+define('test-select-picker/templates/options', ['exports'], function (exports) {
+
+  'use strict';
+
+  exports['default'] = Ember.HTMLBars.template((function() {
+    var child0 = (function() {
+      return {
+        isHTMLBars: true,
+        revision: "Ember@1.11.1",
+        blockParams: 0,
+        cachedFragment: null,
+        hasRendered: false,
+        build: function build(dom) {
+          var el0 = dom.createDocumentFragment();
+          var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleValue\n                multiple=\"true\"\n                showBadge=\"true\"\n                summaryMessage=\"Multiple items selected\"\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
+          dom.appendChild(el0, el1);
+          return el0;
+        },
+        render: function render(context, env, contextualElement) {
+          var dom = env.dom;
+          dom.detectNamespace(contextualElement);
+          var fragment;
+          if (env.useFragmentCache && dom.canClone) {
+            if (this.cachedFragment === null) {
+              fragment = this.build(dom);
+              if (this.hasRendered) {
+                this.cachedFragment = fragment;
+              } else {
+                this.hasRendered = true;
+              }
+            }
+            if (this.cachedFragment) {
+              fragment = dom.cloneNode(this.cachedFragment, true);
+            }
+          } else {
+            fragment = this.build(dom);
+          }
+          return fragment;
+        }
+      };
+    }());
+    return {
+      isHTMLBars: true,
+      revision: "Ember@1.11.1",
+      blockParams: 0,
+      cachedFragment: null,
+      hasRendered: false,
+      build: function build(dom) {
+        var el0 = dom.createDocumentFragment();
+        var el1 = dom.createElement("div");
+        dom.setAttribute(el1,"class","panel panel-default");
+        var el2 = dom.createTextNode("\n  ");
+        dom.appendChild(el1, el2);
+        var el2 = dom.createElement("div");
+        dom.setAttribute(el2,"class","panel-heading");
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("h3");
+        dom.setAttribute(el3,"class","panel-title");
+        var el4 = dom.createTextNode("Badges");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
+        var el3 = dom.createTextNode("\n  ");
+        dom.appendChild(el2, el3);
+        dom.appendChild(el1, el2);
+        var el2 = dom.createTextNode("\n  ");
+        dom.appendChild(el1, el2);
+        var el2 = dom.createElement("div");
+        dom.setAttribute(el2,"class","panel-body");
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("div");
+        dom.setAttribute(el3,"class","row");
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("div");
+        dom.setAttribute(el4,"class","col-sm-4");
+        var el5 = dom.createTextNode("\n        ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createComment("");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n      ");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("div");
+        dom.setAttribute(el4,"class","col-sm-8");
+        var el5 = dom.createTextNode("\n");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createComment("");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("      ");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n    ");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
+        var el3 = dom.createTextNode("\n  ");
+        dom.appendChild(el2, el3);
+        dom.appendChild(el1, el2);
+        var el2 = dom.createTextNode("\n");
+        dom.appendChild(el1, el2);
+        dom.appendChild(el0, el1);
+        var el1 = dom.createTextNode("\n");
+        dom.appendChild(el0, el1);
+        return el0;
+      },
+      render: function render(context, env, contextualElement) {
+        var dom = env.dom;
+        var hooks = env.hooks, get = hooks.get, inline = hooks.inline, block = hooks.block;
+        dom.detectNamespace(contextualElement);
+        var fragment;
+        if (env.useFragmentCache && dom.canClone) {
+          if (this.cachedFragment === null) {
+            fragment = this.build(dom);
+            if (this.hasRendered) {
+              this.cachedFragment = fragment;
+            } else {
+              this.hasRendered = true;
+            }
+          }
+          if (this.cachedFragment) {
+            fragment = dom.cloneNode(this.cachedFragment, true);
+          }
+        } else {
+          fragment = this.build(dom);
+        }
+        var element0 = dom.childAt(fragment, [0, 3, 1]);
+        var morph0 = dom.createMorphAt(dom.childAt(element0, [1]),1,1);
+        var morph1 = dom.createMorphAt(dom.childAt(element0, [3]),1,1);
+        inline(env, morph0, context, "select-picker", [], {"content": get(env, context, "multipleContent"), "selection": get(env, context, "multipleValue"), "multiple": "true", "showBadge": "true", "summaryMessage": "Multiple items selected", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
+        block(env, morph1, context, "highlight-code", [], {"lang": "handlebars"}, child0, null);
         return fragment;
       }
     };
@@ -2894,7 +3289,7 @@ catch(err) {
 if (runningTests) {
   require("test-select-picker/tests/test-helper");
 } else {
-  require("test-select-picker/app")["default"].create({"addonVersion":"1.2.1","name":"test-select-picker","version":"0.0.0.c7770a57"});
+  require("test-select-picker/app")["default"].create({"addonVersion":"1.3.0","name":"test-select-picker","version":"0.0.0.223edec2"});
 }
 
 /* jshint ignore:end */
