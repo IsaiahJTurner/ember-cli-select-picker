@@ -1,0 +1,53 @@
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">I18n Support</h3>
+  </div>
+  <div class="panel-body">
+    <p>To use i18n support you first need to install the <a href="https://www.npmjs.com/package/ember-i18n"><code>ember-i18n</code> addon</a> to your applicaiton project.</p>
+    <pre>$ ember install ember-i18n</pre>
+  </div>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">Template Example</h3>
+  </div>
+  <div class="panel-body">
+{{#highlight-code lang="handlebars"}}
+\{{select-picker content=multipleContent
+                selection=multipleValue
+                titleTranslation="tranlation.key.title"
+                promptTranslation="tranlation.key.prompt"
+                selectAllTranslation="tranlation.key.select_all"
+                selectNoneTranslation="tranlation.key.select_none"
+                summaryMessageTranslation="i18n.tranlation.key.summary"
+                optionLabelPath="content.label"
+                optionValuePath="content.value"}}
+{{/highlight-code}}
+  </div>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">JSON Strings Example</h3>
+  </div>
+  <div class="panel-body">
+{{#highlight-code lang="json"}}
+{
+  "translation": {
+    "key: {
+      "title": "translated title used for accessibility",
+      "prompt": "translated prompt used for native mobile picker",
+      "select_all": "Select All",
+      "select_none": "Select None",
+      "summary": {
+        "zero": "Pick one (prompt)",
+        "one": "You selected \{{item}}",
+        "other": "You selected \{{count}} items: \{{list}}"
+      }
+    }
+  }
+}
+{{/highlight-code}}
+  </div>
+</div
