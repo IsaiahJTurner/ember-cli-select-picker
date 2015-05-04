@@ -77070,13 +77070,15 @@ define('ember-cli-select-picker/mixins/select-picker', ['exports', 'ember'], fun
 
     selectionAsArray: function selectionAsArray() {
       var selection = this.get('selection');
+      // Ember.Select can set the value of selection to
+      // any of null, [], [Object, ...], or Object
       if (Ember['default'].isNone(selection)) {
-        selection = this.get('value');
+        return Ember['default'].A();
       }
-      if (!Ember['default'].isArray(selection)) {
-        return Ember['default'].A([selection]);
+      if (Ember['default'].isArray(selection)) {
+        return Ember['default'].A(selection);
       }
-      return Ember['default'].A(selection);
+      return Ember['default'].A([selection]);
     },
 
     contentList: Ember['default'].computed('selection.@each', 'content.@each', 'optionGroupPath', 'optionLabelPath', 'optionValuePath', 'searchFilter', function () {
@@ -77158,6 +77160,9 @@ define('ember-cli-select-picker/mixins/select-picker', ['exports', 'ember'], fun
 
     makeSearchMatcher: function makeSearchMatcher() {
       var searchFilter = this.get('searchFilter');
+      // item can be null, string, or SafeString.
+      // SafeString does not have toLowerCase() so use toString() to
+      // normalize it.
       if (Ember['default'].isEmpty(searchFilter)) {
         return function () {
           return true; // Show all
@@ -77165,12 +77170,20 @@ define('ember-cli-select-picker/mixins/select-picker', ['exports', 'ember'], fun
       } else if (isAdvancedSearch(this.get('liveSearch'))) {
         searchFilter = new RegExp(searchFilter.split('').join('.*'), 'i');
         return function (item) {
-          return item && searchFilter.test(item);
+          if (Ember['default'].isNone(item)) {
+            return false;
+          } else {
+            return searchFilter.test(item.toString());
+          }
         };
       } else {
         searchFilter = searchFilter.toLowerCase();
         return function (item) {
-          return item && item.toLowerCase().indexOf(searchFilter) >= 0;
+          if (Ember['default'].isNone(item)) {
+            return false;
+          } else {
+            return item.toString().toLowerCase().indexOf(searchFilter) >= 0;
+          }
         };
       }
     },
@@ -77218,12 +77231,12 @@ define('ember-cli-select-picker/mixins/select-picker', ['exports', 'ember'], fun
         if (!this.get('disabled')) {
           if (this.get('multiple')) {
             this.set('keepDropdownOpen', true);
-            this.toggleSelection(selected.item);
+            this.toggleSelection(selected.get('item'));
           } else {
-            this.set('selection', selected.item);
+            this.set('selection', selected.get('item'));
           }
         }
-        return true;
+        return false;
       },
 
       selectAllNone: function selectAllNone(listName) {
@@ -77231,6 +77244,7 @@ define('ember-cli-select-picker/mixins/select-picker', ['exports', 'ember'], fun
         this.get(listName).forEach(function (item) {
           _this.send('selectItem', item);
         });
+        return false;
       },
 
       toggleSelectAllNone: function toggleSelectAllNone() {
@@ -77241,10 +77255,12 @@ define('ember-cli-select-picker/mixins/select-picker', ['exports', 'ember'], fun
           listName = 'unselectedContentList';
         }
         this.send('selectAllNone', listName);
+        return false;
       },
 
       clearFilter: function clearFilter() {
         this.set('searchFilter', null);
+        return false;
       }
     }
   });

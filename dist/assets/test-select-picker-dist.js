@@ -42,6 +42,17 @@ define('test-select-picker/components/keyboard-select-picker', ['exports', 'embe
 
   'use strict';
 
+  function makeKeyboardAction(fn) {
+    return function () {
+      if (!this.get('showDropdown')) {
+        // ignore keyboard input on components that are not *in focus*
+        return true;
+      }
+      fn.apply(this, arguments);
+      return false;
+    };
+  }
+
   var KeyboardSelectPickerComponent = SelectPicker['default'].extend(KeyboardShortcutsMixin['default'], {
 
     layoutName: 'components/select-picker',
@@ -51,6 +62,15 @@ define('test-select-picker/components/keyboard-select-picker', ['exports', 'embe
     activeCursor: null,
 
     classNames: ['select-picker', 'keyboard-select-picker'],
+
+    groupedContentList: Ember['default'].computed('groupedContentListWithoutActive', 'activeIndex', function () {
+      var activeIndex = this.get('activeIndex');
+      var result = Ember['default'].A(this.get('groupedContentListWithoutActive'));
+      result.forEach(function (item, index) {
+        item.set('active', index === activeIndex);
+      });
+      return result;
+    }),
 
     activeIndex: Ember['default'].computed('activeCursor', 'contentList.length', function () {
       var cursor = this.get('activeCursor');
@@ -66,10 +86,7 @@ define('test-select-picker/components/keyboard-select-picker', ['exports', 'embe
     }),
 
     keyboardShortcuts: {
-      enter: function enter() {
-        this.send('selectItem', this.get('activeItem'));
-        return false;
-      },
+      enter: 'selectActiveItem',
       up: 'activePrev',
       down: 'activeNext',
       'shift+tab': 'activePrev',
@@ -77,31 +94,26 @@ define('test-select-picker/components/keyboard-select-picker', ['exports', 'embe
       esc: 'closeDropdown'
     },
 
-    groupedContentList: Ember['default'].computed('groupedContentListWithoutActive', 'activeIndex', function () {
-      var activeIndex = this.get('activeIndex');
-      var result = Ember['default'].A(this.get('groupedContentListWithoutActive'));
-      result.forEach(function (item, index) {
-        item.set('active', index === activeIndex);
-      });
-      return result;
-    }),
-
     actions: {
-      activeNext: function activeNext() {
+      activeNext: makeKeyboardAction(function () {
         if (Ember['default'].isNone(this.get('activeCursor'))) {
           this.set('activeCursor', 0);
         } else {
           this.incrementProperty('activeCursor');
         }
-      },
-      activePrev: function activePrev() {
+      }),
+
+      activePrev: makeKeyboardAction(function () {
         if (Ember['default'].isNone(this.get('activeCursor'))) {
           this.set('activeCursor', -1);
         } else {
           this.decrementProperty('activeCursor');
         }
-      }
-    }
+      }),
+
+      selectActiveItem: makeKeyboardAction(function () {
+        this.send('selectItem', this.get('activeItem'));
+      }) }
   });
 
   exports['default'] = KeyboardSelectPickerComponent;
@@ -3890,7 +3902,7 @@ catch(err) {
 if (runningTests) {
   require("test-select-picker/tests/test-helper");
 } else {
-  require("test-select-picker/app")["default"].create({"addonVersion":"1.3.1","name":"test-select-picker","version":"0.0.0.29c3c16a"});
+  require("test-select-picker/app")["default"].create({"addonVersion":"1.3.2","name":"test-select-picker","version":"0.0.0.f37eb8f8"});
 }
 
 /* jshint ignore:end */
