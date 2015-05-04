@@ -2032,7 +2032,7 @@ define('test-select-picker/templates/i18n', ['exports'], function (exports) {
         hasRendered: false,
         build: function build(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleValue\n\n                titleTranslation=\"tranlation.key.title\"\n                promptTranslation=\"tranlation.key.prompt\"\n                selectAllTranslation=\"tranlation.key.select_all\"\n                selectNoneTranslation=\"tranlation.key.select_none\"\n\n                summaryMessageKey=\"i18n.tranlation.key.summary\"\n\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
+          var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleValue\n                multiple=\"true\"\n\n                titleTranslation=\"tranlation.key.title\"\n                promptTranslation=\"tranlation.key.prompt\"\n                selectAllTranslation=\"tranlation.key.select_all\"\n                selectNoneTranslation=\"tranlation.key.select_none\"\n\n                summaryMessageKey=\"i18n.tranlation.key.summary\"\n\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -3890,7 +3890,7 @@ catch(err) {
 if (runningTests) {
   require("test-select-picker/tests/test-helper");
 } else {
-  require("test-select-picker/app")["default"].create({"addonVersion":"1.3.1","name":"test-select-picker","version":"0.0.0.6f12cd4b"});
+  require("test-select-picker/app")["default"].create({"addonVersion":"1.3.1","name":"test-select-picker","version":"0.0.0.29c3c16a"});
 }
 
 /* jshint ignore:end */
