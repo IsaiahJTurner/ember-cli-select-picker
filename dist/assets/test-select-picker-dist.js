@@ -155,6 +155,8 @@ define('test-select-picker/components/select-picker', ['exports', 'ember', 'embe
 
   var SelectPickerComponent = Ember['default'].Component.extend(SelectPickerMixin['default'], I18nProps, {
 
+    prompt: 'Nothing Selected',
+    summaryMessage: '%@ items selected',
     selectAllLabel: 'All',
     selectNoneLabel: 'None',
 
@@ -2030,7 +2032,7 @@ define('test-select-picker/templates/i18n', ['exports'], function (exports) {
         hasRendered: false,
         build: function build(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleValue\n                titleTranslation=\"tranlation.key.title\"\n                promptTranslation=\"tranlation.key.prompt\"\n                selectAllTranslation=\"tranlation.key.select_all\"\n                selectNoneTranslation=\"tranlation.key.select_none\"\n                summaryMessageTranslation=\"i18n.tranlation.key.summary\"\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
+          var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleValue\n\n                titleTranslation=\"tranlation.key.title\"\n                promptTranslation=\"tranlation.key.prompt\"\n                selectAllTranslation=\"tranlation.key.select_all\"\n                selectNoneTranslation=\"tranlation.key.select_none\"\n\n                summaryMessageKey=\"i18n.tranlation.key.summary\"\n\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -2066,7 +2068,7 @@ define('test-select-picker/templates/i18n', ['exports'], function (exports) {
         hasRendered: false,
         build: function build(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{\n  \"translation\": {\n    \"key: {\n      \"title\": \"translated title used for accessibility\",\n      \"prompt\": \"translated prompt used for native mobile picker\",\n      \"select_all\": \"Select All\",\n      \"select_none\": \"Select None\",\n      \"summary\": {\n        \"zero\": \"Pick one (prompt)\",\n        \"one\": \"You selected {{item}}\",\n        \"other\": \"You selected {{count}} items: {{list}}\"\n      }\n    }\n  }\n}\n");
+          var el1 = dom.createTextNode("{\n  \"translation\": {\n    \"key: {\n      \"title\": \"translated title used for accessibility\",\n      \"prompt\": \"translated prompt\",\n      \"select_all\": \"Select All\",\n      \"select_none\": \"Select None\",\n      \"summary\": {\n        \"one\": \"You selected {{item}}\",\n        \"other\": \"You selected {{count}} items: {{list}}\"\n      }\n    }\n  }\n}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -2213,6 +2215,114 @@ define('test-select-picker/templates/i18n', ['exports'], function (exports) {
         dom.appendChild(el1, el2);
         var el2 = dom.createTextNode("\n");
         dom.appendChild(el1, el2);
+        dom.appendChild(el0, el1);
+        var el1 = dom.createTextNode("\n\n");
+        dom.appendChild(el0, el1);
+        var el1 = dom.createElement("div");
+        dom.setAttribute(el1,"class","panel panel-default");
+        var el2 = dom.createTextNode("\n  ");
+        dom.appendChild(el1, el2);
+        var el2 = dom.createElement("div");
+        dom.setAttribute(el2,"class","panel-heading");
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("h3");
+        dom.setAttribute(el3,"class","panel-title");
+        var el4 = dom.createTextNode("Caveats");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
+        var el3 = dom.createTextNode("\n  ");
+        dom.appendChild(el2, el3);
+        dom.appendChild(el1, el2);
+        var el2 = dom.createTextNode("\n  ");
+        dom.appendChild(el1, el2);
+        var el2 = dom.createElement("div");
+        dom.setAttribute(el2,"class","panel-body");
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("p");
+        var el4 = dom.createTextNode("Because translated properties can not have interpolated values the ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("code");
+        var el5 = dom.createTextNode("summaryMessage");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode(" uses ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("code");
+        var el5 = dom.createTextNode("summaryMessageKey");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode(" instead of ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("code");
+        var el5 = dom.createTextNode("summaryMessageTranslation");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode(". It has the following values:");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("dl");
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("dt");
+        var el5 = dom.createTextNode("count");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("dd");
+        var el5 = dom.createTextNode("Number of selected items. If ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("em");
+        var el6 = dom.createTextNode("zero");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode(" then ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("code");
+        var el6 = dom.createTextNode("prompt");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode(" is used instead.");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("dt");
+        var el5 = dom.createTextNode("item");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("dd");
+        var el5 = dom.createTextNode("The item selected (first item in the list if multiple items are selected).");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("dt");
+        var el5 = dom.createTextNode("list");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("dd");
+        var el5 = dom.createTextNode("The list of selected items comma separated.");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n    ");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
+        var el3 = dom.createTextNode("\n  ");
+        dom.appendChild(el2, el3);
+        dom.appendChild(el1, el2);
+        var el2 = dom.createTextNode("\n");
+        dom.appendChild(el1, el2);
+        dom.appendChild(el0, el1);
+        var el1 = dom.createTextNode("\n");
         dom.appendChild(el0, el1);
         return el0;
       },
@@ -3780,7 +3890,7 @@ catch(err) {
 if (runningTests) {
   require("test-select-picker/tests/test-helper");
 } else {
-  require("test-select-picker/app")["default"].create({"addonVersion":"1.3.0","name":"test-select-picker","version":"0.0.0.b715a3bb"});
+  require("test-select-picker/app")["default"].create({"addonVersion":"1.3.1","name":"test-select-picker","version":"0.0.0.6f12cd4b"});
 }
 
 /* jshint ignore:end */

@@ -77063,10 +77063,6 @@ define('ember-cli-select-picker/mixins/select-picker', ['exports', 'ember'], fun
   var SelectPickerMixin = Ember['default'].Mixin.create({
     liveSearch: false,
     showDropdown: false,
-    prompt: false,
-    content: [],
-    selection: [],
-    summaryMessage: '%@ items selected',
 
     menuButtonId: Ember['default'].computed('elementId', function () {
       return this.get('elementId') + '-dropdown-menu';
@@ -77075,8 +77071,9 @@ define('ember-cli-select-picker/mixins/select-picker', ['exports', 'ember'], fun
     selectionAsArray: function selectionAsArray() {
       var selection = this.get('selection');
       if (Ember['default'].isNone(selection)) {
-        return Ember['default'].A();
-      } else if (!Ember['default'].isArray(selection)) {
+        selection = this.get('value');
+      }
+      if (!Ember['default'].isArray(selection)) {
         return Ember['default'].A([selection]);
       }
       return Ember['default'].A(selection);
@@ -77178,32 +77175,30 @@ define('ember-cli-select-picker/mixins/select-picker', ['exports', 'ember'], fun
       }
     },
 
-    selectionLabels: Ember['default'].computed('selection.@each', function () {
-      var result = this.selectionAsArray().map(Ember['default'].run.bind(this, function (item) {
-        return this.getByContentPath(item, 'optionLabelPath');
-      }));
-      return Ember['default'].A(result);
-    }),
+    selectionLabels: Ember['default'].computed.mapBy('selectedContentList', 'label'),
 
-    selectionSummary: Ember['default'].computed('selectionLabels.@each', 'prompt', 'summaryMessage', function () {
+    selectionSummary: Ember['default'].computed('selectionLabels.[]', 'prompt', 'summaryMessage', 'summaryMessageKey', function () {
       var selection = this.get('selectionLabels');
-      var messageKey = this.get('summaryMessageTranslation');
+      var count = selection.get('length');
+      var messageKey = this.get('summaryMessageKey');
       if (Ember['default'].I18n && Ember['default'].isPresent(messageKey)) {
-        // I18n for prompt can be managed by using the pluralization feature:
-        // https://github.com/jamesarosen/ember-i18n#pluralization
+        // TODO: Allow an enablePrompt="false" feature
+        if (count === 0) {
+          return this.get('prompt');
+        }
         return Ember['default'].I18n.t(messageKey, {
-          count: selection.length,
+          count: count,
           item: selection.get('firstObject'),
           list: selection.join(', ')
         });
       }
-      switch (selection.length) {
+      switch (count) {
         case 0:
-          return this.get('prompt') || 'Nothing Selected';
+          return this.get('prompt');
         case 1:
           return selection.get('firstObject');
         default:
-          return Ember['default'].String.fmt(this.get('summaryMessage'), selection.length, selection.get('firstObject'), selection.join(', '));
+          return Ember['default'].String.fmt(this.get('summaryMessage'), count, selection.get('firstObject'), selection.join(', '));
       }
     }),
 
