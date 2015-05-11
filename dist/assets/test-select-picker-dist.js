@@ -167,7 +167,7 @@ define('test-select-picker/components/select-picker', ['exports', 'ember', 'embe
 
   var SelectPickerComponent = Ember['default'].Component.extend(SelectPickerMixin['default'], I18nProps, {
 
-    prompt: 'Nothing Selected',
+    nothingSelectedMessage: 'Nothing Selected',
     summaryMessage: '%@ items selected',
     selectAllLabel: 'All',
     selectNoneLabel: 'None',
@@ -177,6 +177,7 @@ define('test-select-picker/components/select-picker', ['exports', 'ember', 'embe
     classNames: ['select-picker'],
 
     badgeEnabled: Ember['default'].computed.and('showBadge', 'multiple'),
+
     selectionBadge: Ember['default'].computed('selection.length', 'badgeEnabled', function () {
       var enabled = this.get('badgeEnabled');
       var selected = this.get('selection.length');
@@ -184,18 +185,18 @@ define('test-select-picker/components/select-picker', ['exports', 'ember', 'embe
     }),
 
     setupDom: Ember['default'].on('didInsertElement', function () {
-      var eventName = 'click.' + this.get('elementId');
-      var _this = this;
-      $(document).on(eventName, function (e) {
-        if (_this.get('keepDropdownOpen')) {
-          _this.set('keepDropdownOpen', false);
-          return;
-        }
-        if (_this.element && !$.contains(_this.element, e.target)) {
-          _this.set('showDropdown', false);
-        }
-      });
+      $(document).on('click.' + this.get('elementId'), Ember['default'].run.bind(this, this.hideDropdownMenu));
     }),
+
+    hideDropdownMenu: function hideDropdownMenu(evt) {
+      if (this.get('keepDropdownOpen')) {
+        this.set('keepDropdownOpen', false);
+        return;
+      }
+      if (this.element && !$.contains(this.element, evt.target)) {
+        this.send('closeDropdown');
+      }
+    },
 
     teardownDom: Ember['default'].on('willDestroyElement', function () {
       $(document).off('.' + this.get('elementId'));
@@ -1509,7 +1510,7 @@ define('test-select-picker/templates/components/list-picker', ['exports'], funct
         var morph2 = dom.createMorphAt(element9,2,2);
         var morph3 = dom.createMorphAt(element9,3,3);
         dom.insertBoundary(fragment, 0);
-        inline(env, morph0, context, "view", ["select"], {"class": "native-select", "classNameBindings": "nativeMobile:visible-xs-inline:hidden", "content": get(env, context, "content"), "selection": get(env, context, "selection"), "value": get(env, context, "value"), "title": get(env, context, "title"), "prompt": get(env, context, "prompt"), "multiple": get(env, context, "multiple"), "disabled": get(env, context, "disabled"), "optionGroupPath": get(env, context, "optionGroupPath"), "optionLabelPath": get(env, context, "optionLabelPath"), "optionValuePath": get(env, context, "optionValuePath")});
+        inline(env, morph0, context, "view", ["select"], {"class": "native-select form-control", "classNameBindings": "nativeMobile:visible-xs-inline:hidden", "content": get(env, context, "content"), "selection": get(env, context, "selection"), "value": get(env, context, "value"), "title": get(env, context, "title"), "prompt": get(env, context, "prompt"), "multiple": get(env, context, "multiple"), "disabled": get(env, context, "disabled"), "optionGroupPath": get(env, context, "optionGroupPath"), "optionLabelPath": get(env, context, "optionLabelPath"), "optionValuePath": get(env, context, "optionValuePath")});
         element(env, element9, context, "bind-attr", [], {"class": ":bs-select nativeMobile:hidden-xs disabled:disabled"});
         block(env, morph1, context, "if", [get(env, context, "liveSearch")], {}, child0, null);
         block(env, morph2, context, "if", [get(env, context, "multiple")], {}, child1, null);
@@ -2011,7 +2012,7 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
         var morph4 = dom.createMorphAt(element12,2,2);
         var morph5 = dom.createMorphAt(element12,3,3);
         dom.insertBoundary(fragment, 0);
-        inline(env, morph0, context, "view", ["select"], {"class": "native-select", "classNameBindings": "nativeMobile:visible-xs-inline:hidden", "content": get(env, context, "content"), "selection": get(env, context, "selection"), "value": get(env, context, "value"), "title": get(env, context, "title"), "prompt": get(env, context, "prompt"), "multiple": get(env, context, "multiple"), "disabled": get(env, context, "disabled"), "optionGroupPath": get(env, context, "optionGroupPath"), "optionLabelPath": get(env, context, "optionLabelPath"), "optionValuePath": get(env, context, "optionValuePath")});
+        inline(env, morph0, context, "view", ["select"], {"class": "native-select form-control", "classNameBindings": "nativeMobile:visible-xs-inline:hidden", "content": get(env, context, "content"), "selection": get(env, context, "selection"), "value": get(env, context, "value"), "title": get(env, context, "title"), "prompt": get(env, context, "prompt"), "multiple": get(env, context, "multiple"), "disabled": get(env, context, "disabled"), "optionGroupPath": get(env, context, "optionGroupPath"), "optionLabelPath": get(env, context, "optionLabelPath"), "optionValuePath": get(env, context, "optionValuePath")});
         element(env, element8, context, "bind-attr", [], {"class": ":bs-select :btn-group :dropdown nativeMobile:hidden-xs disabled:disabled showDropdown:open"});
         element(env, element9, context, "bind-attr", [], {"class": ":btn :btn-default :dropdown-toggle class"});
         element(env, element9, context, "bind-attr", [], {"id": get(env, context, "menuButtonId")});
@@ -3902,7 +3903,7 @@ catch(err) {
 if (runningTests) {
   require("test-select-picker/tests/test-helper");
 } else {
-  require("test-select-picker/app")["default"].create({"addonVersion":"1.3.2","name":"test-select-picker","version":"0.0.0.f37eb8f8"});
+  require("test-select-picker/app")["default"].create({"addonVersion":"1.3.4","name":"test-select-picker","version":"0.0.0.0926ebde"});
 }
 
 /* jshint ignore:end */

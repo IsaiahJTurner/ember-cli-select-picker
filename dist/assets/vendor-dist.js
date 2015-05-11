@@ -77190,14 +77190,14 @@ define('ember-cli-select-picker/mixins/select-picker', ['exports', 'ember'], fun
 
     selectionLabels: Ember['default'].computed.mapBy('selectedContentList', 'label'),
 
-    selectionSummary: Ember['default'].computed('selectionLabels.[]', 'prompt', 'summaryMessage', 'summaryMessageKey', function () {
+    selectionSummary: Ember['default'].computed('selectionLabels.[]', 'nothingSelectedMessage', 'summaryMessage', 'summaryMessageKey', function () {
       var selection = this.get('selectionLabels');
       var count = selection.get('length');
       var messageKey = this.get('summaryMessageKey');
       if (Ember['default'].I18n && Ember['default'].isPresent(messageKey)) {
         // TODO: Allow an enablePrompt="false" feature
         if (count === 0) {
-          return this.get('prompt');
+          return this.get('nothingSelectedMessage');
         }
         return Ember['default'].I18n.t(messageKey, {
           count: count,
@@ -77207,7 +77207,7 @@ define('ember-cli-select-picker/mixins/select-picker', ['exports', 'ember'], fun
       }
       switch (count) {
         case 0:
-          return this.get('prompt');
+          return this.get('nothingSelectedMessage');
         case 1:
           return selection.get('firstObject');
         default:
