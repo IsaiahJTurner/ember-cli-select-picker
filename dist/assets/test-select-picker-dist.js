@@ -174,7 +174,7 @@ define('test-select-picker/components/select-picker', ['exports', 'ember', 'embe
 
     nativeMobile: true,
 
-    classNames: ['select-picker'],
+    classNames: ['select-picker', 'btn-group'],
 
     badgeEnabled: Ember['default'].computed.and('showBadge', 'multiple'),
 
@@ -2013,7 +2013,7 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
         var morph5 = dom.createMorphAt(element12,3,3);
         dom.insertBoundary(fragment, 0);
         inline(env, morph0, context, "view", ["select"], {"class": "native-select form-control", "classNameBindings": "nativeMobile:visible-xs-inline:hidden", "content": get(env, context, "content"), "selection": get(env, context, "selection"), "value": get(env, context, "value"), "title": get(env, context, "title"), "prompt": get(env, context, "prompt"), "multiple": get(env, context, "multiple"), "disabled": get(env, context, "disabled"), "optionGroupPath": get(env, context, "optionGroupPath"), "optionLabelPath": get(env, context, "optionLabelPath"), "optionValuePath": get(env, context, "optionValuePath")});
-        element(env, element8, context, "bind-attr", [], {"class": ":bs-select :btn-group :dropdown nativeMobile:hidden-xs disabled:disabled showDropdown:open"});
+        element(env, element8, context, "bind-attr", [], {"class": ":bs-select :dropdown nativeMobile:hidden-xs disabled:disabled showDropdown:open"});
         element(env, element9, context, "bind-attr", [], {"class": ":btn :btn-default :dropdown-toggle class"});
         element(env, element9, context, "bind-attr", [], {"id": get(env, context, "menuButtonId")});
         element(env, element9, context, "bind-attr", [], {"disabled": get(env, context, "disabled")});
@@ -3903,7 +3903,7 @@ catch(err) {
 if (runningTests) {
   require("test-select-picker/tests/test-helper");
 } else {
-  require("test-select-picker/app")["default"].create({"addonVersion":"1.3.4","name":"test-select-picker","version":"0.0.0.0926ebde"});
+  require("test-select-picker/app")["default"].create({"addonVersion":"1.3.5","name":"test-select-picker","version":"0.0.0.3034abaf"});
 }
 
 /* jshint ignore:end */
