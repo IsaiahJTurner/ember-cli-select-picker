@@ -3903,7 +3903,7 @@ catch(err) {
 if (runningTests) {
   require("test-select-picker/tests/test-helper");
 } else {
-  require("test-select-picker/app")["default"].create({"addonVersion":"1.3.5","name":"test-select-picker","version":"0.0.0.b80ed97f"});
+  require("test-select-picker/app")["default"].create({"addonVersion":"1.3.5","name":"test-select-picker","version":"0.0.0.199889da"});
 }
 
 /* jshint ignore:end */
