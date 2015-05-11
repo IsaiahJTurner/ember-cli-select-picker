@@ -2045,7 +2045,7 @@ define('test-select-picker/templates/i18n', ['exports'], function (exports) {
         hasRendered: false,
         build: function build(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleValue\n                multiple=\"true\"\n\n                titleTranslation=\"tranlation.key.title\"\n                promptTranslation=\"tranlation.key.prompt\"\n                selectAllTranslation=\"tranlation.key.select_all\"\n                selectNoneTranslation=\"tranlation.key.select_none\"\n\n                summaryMessageKey=\"i18n.tranlation.key.summary\"\n\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
+          var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleValue\n                multiple=\"true\"\n\n                titleTranslation=\"tranlation.key.title\"\n                selectAllTranslation=\"tranlation.key.select_all\"\n                selectNoneTranslation=\"tranlation.key.select_none\"\n                nothingSelectedMessageTranslation=\"tranlation.key.prompt\"\n\n                summaryMessageKey=\"i18n.tranlation.key.summary\"\n\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -2296,7 +2296,7 @@ define('test-select-picker/templates/i18n', ['exports'], function (exports) {
         var el5 = dom.createTextNode(" then ");
         dom.appendChild(el4, el5);
         var el5 = dom.createElement("code");
-        var el6 = dom.createTextNode("prompt");
+        var el6 = dom.createTextNode("nothingSelectedMessage");
         dom.appendChild(el5, el6);
         dom.appendChild(el4, el5);
         var el5 = dom.createTextNode(" is used instead.");
@@ -3903,7 +3903,7 @@ catch(err) {
 if (runningTests) {
   require("test-select-picker/tests/test-helper");
 } else {
-  require("test-select-picker/app")["default"].create({"addonVersion":"1.3.5","name":"test-select-picker","version":"0.0.0.3034abaf"});
+  require("test-select-picker/app")["default"].create({"addonVersion":"1.3.5","name":"test-select-picker","version":"0.0.0.b80ed97f"});
 }
 
 /* jshint ignore:end */
