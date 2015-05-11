@@ -19,9 +19,9 @@
                 multiple="true"
 
                 titleTranslation="tranlation.key.title"
-                promptTranslation="tranlation.key.prompt"
                 selectAllTranslation="tranlation.key.select_all"
                 selectNoneTranslation="tranlation.key.select_none"
+                nothingSelectedMessageTranslation="tranlation.key.prompt"
 
                 summaryMessageKey="i18n.tranlation.key.summary"
 
@@ -63,7 +63,7 @@
     <p>Because translated properties can not have interpolated values the <code>summaryMessage</code> uses <code>summaryMessageKey</code> instead of <code>summaryMessageTranslation</code>. It has the following values:</p>
     <dl>
       <dt>count</dt>
-      <dd>Number of selected items. If <em>zero</em> then <code>prompt</code> is used instead.</dd>
+      <dd>Number of selected items. If <em>zero</em> then <code>nothingSelectedMessage</code> is used instead.</dd>
       <dt>item</dt>
       <dd>The item selected (first item in the list if multiple items are selected).</dd>
       <dt>list</dt>
