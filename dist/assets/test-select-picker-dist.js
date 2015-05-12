@@ -112,7 +112,10 @@ define('test-select-picker/components/keyboard-select-picker', ['exports', 'embe
       }),
 
       selectActiveItem: makeKeyboardAction(function () {
-        this.send('selectItem', this.get('activeItem'));
+        var item = this.get('activeItem');
+        if (Ember['default'].isPresent(item)) {
+          this.send('selectItem', item);
+        }
       }) }
   });
 
@@ -175,6 +178,7 @@ define('test-select-picker/components/select-picker', ['exports', 'ember', 'embe
     nativeMobile: true,
 
     classNames: ['select-picker', 'btn-group'],
+    buttonClass: 'btn-default',
 
     badgeEnabled: Ember['default'].computed.and('showBadge', 'multiple'),
 
@@ -1207,16 +1211,24 @@ define('test-select-picker/templates/components/list-picker', ['exports'], funct
             var el0 = dom.createDocumentFragment();
             var el1 = dom.createTextNode("      ");
             dom.appendChild(el0, el1);
-            var el1 = dom.createElement("button");
-            dom.setAttribute(el1,"type","button");
-            dom.setAttribute(el1,"class","btn btn-default btn-block");
+            var el1 = dom.createElement("div");
+            dom.setAttribute(el1,"role","group");
+            dom.setAttribute(el1,"class","btn-group-vertical btn-block");
             var el2 = dom.createTextNode("\n        ");
             dom.appendChild(el1, el2);
-            var el2 = dom.createComment("");
-            dom.appendChild(el1, el2);
-            var el2 = dom.createTextNode("\n        ");
-            dom.appendChild(el1, el2);
-            var el2 = dom.createElement("span");
+            var el2 = dom.createElement("button");
+            dom.setAttribute(el2,"type","button");
+            dom.setAttribute(el2,"class","btn btn-default");
+            var el3 = dom.createTextNode("\n          ");
+            dom.appendChild(el2, el3);
+            var el3 = dom.createComment("");
+            dom.appendChild(el2, el3);
+            var el3 = dom.createTextNode("\n          ");
+            dom.appendChild(el2, el3);
+            var el3 = dom.createElement("span");
+            dom.appendChild(el2, el3);
+            var el3 = dom.createTextNode("\n        ");
+            dom.appendChild(el2, el3);
             dom.appendChild(el1, el2);
             var el2 = dom.createTextNode("\n      ");
             dom.appendChild(el1, el2);
@@ -1245,12 +1257,12 @@ define('test-select-picker/templates/components/list-picker', ['exports'], funct
             } else {
               fragment = this.build(dom);
             }
-            var element2 = dom.childAt(fragment, [1]);
+            var element2 = dom.childAt(fragment, [1, 1]);
             var element3 = dom.childAt(element2, [3]);
             var morph0 = dom.createMorphAt(element2,1,1);
             element(env, element2, context, "action", ["toggleSelectAllNone"], {});
             content(env, morph0, context, "selectAllNoneLabel");
-            element(env, element3, context, "bind-attr", [], {"class": ":pull-right :glyphicon glyphiconClass"});
+            element(env, element3, context, "bind-attr", [], {"class": ":check-mark :glyphicon glyphiconClass"});
             return fragment;
           }
         };
@@ -1397,7 +1409,7 @@ define('test-select-picker/templates/components/list-picker', ['exports'], funct
             element(env, element0, context, "action", ["selectItem", get(env, context, "item")], {});
             element(env, element0, context, "bind-attr", [], {"class": ":btn :btn-default item.selected:active"});
             content(env, morph0, context, "item.label");
-            element(env, element1, context, "bind-attr", [], {"class": ":pull-right :glyphicon :glyphicon-ok :check-mark item.selected::invisible"});
+            element(env, element1, context, "bind-attr", [], {"class": ":glyphicon :glyphicon-ok :check-mark item.selected::invisible"});
             return fragment;
           }
         };
@@ -1701,7 +1713,7 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
             var morph0 = dom.createMorphAt(element3,1,1);
             element(env, element3, context, "action", ["toggleSelectAllNone"], {});
             content(env, morph0, context, "selectAllNoneLabel");
-            element(env, element4, context, "bind-attr", [], {"class": ":pull-right :glyphicon glyphiconClass"});
+            element(env, element4, context, "bind-attr", [], {"class": ":check-mark :glyphicon glyphiconClass"});
             return fragment;
           }
         };
@@ -2014,7 +2026,7 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
         dom.insertBoundary(fragment, 0);
         inline(env, morph0, context, "view", ["select"], {"class": "native-select form-control", "classNameBindings": "nativeMobile:visible-xs-inline:hidden", "content": get(env, context, "content"), "selection": get(env, context, "selection"), "value": get(env, context, "value"), "title": get(env, context, "title"), "prompt": get(env, context, "prompt"), "multiple": get(env, context, "multiple"), "disabled": get(env, context, "disabled"), "optionGroupPath": get(env, context, "optionGroupPath"), "optionLabelPath": get(env, context, "optionLabelPath"), "optionValuePath": get(env, context, "optionValuePath")});
         element(env, element8, context, "bind-attr", [], {"class": ":bs-select :dropdown nativeMobile:hidden-xs disabled:disabled showDropdown:open"});
-        element(env, element9, context, "bind-attr", [], {"class": ":btn :btn-default :dropdown-toggle class"});
+        element(env, element9, context, "bind-attr", [], {"class": ":btn :dropdown-toggle buttonClass"});
         element(env, element9, context, "bind-attr", [], {"id": get(env, context, "menuButtonId")});
         element(env, element9, context, "bind-attr", [], {"disabled": get(env, context, "disabled")});
         element(env, element9, context, "action", ["showHide"], {});
@@ -3903,7 +3915,7 @@ catch(err) {
 if (runningTests) {
   require("test-select-picker/tests/test-helper");
 } else {
-  require("test-select-picker/app")["default"].create({"addonVersion":"1.3.5","name":"test-select-picker","version":"0.0.0.199889da"});
+  require("test-select-picker/app")["default"].create({"addonVersion":"1.4.0","name":"test-select-picker","version":"0.0.0.6bb896b7"});
 }
 
 /* jshint ignore:end */
