@@ -7,8 +7,8 @@
       <div class="col-sm-4">
         {{select-picker content=simpleSearchContent
                         selection=simpleSearchValue
-                        multiple="true"
-                        liveSearch="true"
+                        multiple=true
+                        liveSearch=true
                         optionGroupPath="group"
                         optionLabelPath="content.label"
                         optionValuePath="content.value"}}
@@ -17,8 +17,8 @@
 {{#highlight-code lang="handlebars"}}
 \{{select-picker content=simpleSearchContent
                 selection=simpleSearchValue
-                multiple="true"
-                liveSearch="true"
+                multiple=true
+                liveSearch=true
                 optionGroupPath="group"
                 optionLabelPath="content.label"
                 optionValuePath="content.value"}}
@@ -37,7 +37,7 @@
       <div class="col-sm-4">
         {{select-picker content=advancedSearchContent
                         selection=advancedSearchValue
-                        multiple="true"
+                        multiple=true
                         liveSearch="advanced"
                         optionGroupPath="group"
                         optionLabelPath="content.label"
@@ -47,7 +47,7 @@
 {{#highlight-code lang="handlebars"}}
 \{{select-picker content=advancedSearchContent
                 selection=advancedSearchValue
-                multiple="true"
+                multiple=true
                 liveSearch="advanced"
                 optionGroupPath="group"
                 optionLabelPath="content.label"
@@ -67,7 +67,7 @@
       <div class="col-sm-4">
         {{list-picker content=listSearchContent
                       selection=listSearchValue
-                      multiple="true"
+                      multiple=true
                       liveSearch="advanced"
                       optionGroupPath="group"
                       optionLabelPath="content.label"
@@ -77,7 +77,7 @@
 {{#highlight-code lang="handlebars"}}
 \{{list-picker content=advancedSearchContent
               selection=listSearchValue
-              multiple="true"
+              multiple=true
               liveSearch="advanced"
               optionGroupPath="group"
               optionLabelPath="content.label"
