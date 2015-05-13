@@ -2057,7 +2057,7 @@ define('test-select-picker/templates/i18n', ['exports'], function (exports) {
         hasRendered: false,
         build: function build(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleValue\n                multiple=\"true\"\n\n                titleTranslation=\"tranlation.key.title\"\n                selectAllTranslation=\"tranlation.key.select_all\"\n                selectNoneTranslation=\"tranlation.key.select_none\"\n                nothingSelectedMessageTranslation=\"tranlation.key.prompt\"\n\n                summaryMessageKey=\"i18n.tranlation.key.summary\"\n\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
+          var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleValue\n                multiple=true\n\n                titleTranslation=\"tranlation.key.title\"\n                selectAllTranslation=\"tranlation.key.select_all\"\n                selectNoneTranslation=\"tranlation.key.select_none\"\n                nothingSelectedMessageTranslation=\"tranlation.key.prompt\"\n\n                summaryMessageKey=\"i18n.tranlation.key.summary\"\n\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -2431,7 +2431,7 @@ define('test-select-picker/templates/index', ['exports'], function (exports) {
         hasRendered: false,
         build: function build(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleValue\n                multiple=\"true\"\n                optionGroupPath=\"group\"\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
+          var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleValue\n                multiple=true\n                optionGroupPath=\"group\"\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -2706,7 +2706,7 @@ define('test-select-picker/templates/index', ['exports'], function (exports) {
         var morph5 = dom.createMorphAt(dom.childAt(element2, [3]),1,1);
         inline(env, morph0, context, "select-picker", [], {"content": get(env, context, "singleContent"), "value": get(env, context, "singleValue"), "optionLabelPath": "content.label", "optionValuePath": "content.value"});
         block(env, morph1, context, "highlight-code", [], {"lang": "handlebars"}, child0, null);
-        inline(env, morph2, context, "select-picker", [], {"content": get(env, context, "multipleContent"), "selection": get(env, context, "multipleValue"), "multiple": "true", "optionGroupPath": "group", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
+        inline(env, morph2, context, "select-picker", [], {"content": get(env, context, "multipleContent"), "selection": get(env, context, "multipleValue"), "multiple": true, "optionGroupPath": "group", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
         block(env, morph3, context, "highlight-code", [], {"lang": "handlebars"}, child1, null);
         inline(env, morph4, context, "list-picker", [], {"content": get(env, context, "listContent"), "selection": get(env, context, "listValue"), "multiple": "true", "optionGroupPath": "group", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
         block(env, morph5, context, "highlight-code", [], {"lang": "handlebars"}, child2, null);
@@ -2914,7 +2914,7 @@ define('test-select-picker/templates/keyboard', ['exports'], function (exports) 
         hasRendered: false,
         build: function build(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{{keyboard-select-picker content=multipleContent\n                         selection=multipleValue\n                         multiple=\"true\"\n                         optionGroupPath=\"group\"\n                         optionLabelPath=\"content.label\"\n                         optionValuePath=\"content.value\"}}\n");
+          var el1 = dom.createTextNode("{{keyboard-select-picker content=multipleContent\n                         selection=multipleValue\n                         multiple=true\n                         optionGroupPath=\"group\"\n                         optionLabelPath=\"content.label\"\n                         optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -3289,7 +3289,7 @@ define('test-select-picker/templates/keyboard', ['exports'], function (exports) 
         var morph3 = dom.createMorphAt(dom.childAt(element1, [3]),1,1);
         inline(env, morph0, context, "keyboard-select-picker", [], {"content": get(env, context, "singleContent"), "value": get(env, context, "singleValue"), "optionLabelPath": "content.label", "optionValuePath": "content.value"});
         block(env, morph1, context, "highlight-code", [], {"lang": "handlebars"}, child0, null);
-        inline(env, morph2, context, "keyboard-select-picker", [], {"content": get(env, context, "multipleContent"), "selection": get(env, context, "multipleValue"), "multiple": "true", "optionGroupPath": "group", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
+        inline(env, morph2, context, "keyboard-select-picker", [], {"content": get(env, context, "multipleContent"), "selection": get(env, context, "multipleValue"), "multiple": true, "optionGroupPath": "group", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
         block(env, morph3, context, "highlight-code", [], {"lang": "handlebars"}, child1, null);
         return fragment;
       }
@@ -3311,7 +3311,7 @@ define('test-select-picker/templates/options', ['exports'], function (exports) {
         hasRendered: false,
         build: function build(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleValue\n                multiple=\"true\"\n                showBadge=\"true\"\n                summaryMessage=\"Multiple items selected\"\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
+          var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleValue\n                multiple=true\n                showBadge=true\n                summaryMessage=\"Multiple items selected\"\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -3347,7 +3347,7 @@ define('test-select-picker/templates/options', ['exports'], function (exports) {
         hasRendered: false,
         build: function build(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleValue\n                multiple=\"true\"\n                nativeMobile=\"false\"\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
+          var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleValue\n                multiple=true\n                nativeMobile=false\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -3542,9 +3542,9 @@ define('test-select-picker/templates/options', ['exports'], function (exports) {
         var morph1 = dom.createMorphAt(dom.childAt(element0, [3]),1,1);
         var morph2 = dom.createMorphAt(dom.childAt(element1, [1]),1,1);
         var morph3 = dom.createMorphAt(dom.childAt(element1, [3]),1,1);
-        inline(env, morph0, context, "select-picker", [], {"content": get(env, context, "multipleContent"), "selection": get(env, context, "multipleValue"), "multiple": "true", "showBadge": "true", "summaryMessage": "Multiple items selected", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
+        inline(env, morph0, context, "select-picker", [], {"content": get(env, context, "multipleContent"), "selection": get(env, context, "multipleValue"), "multiple": true, "showBadge": true, "summaryMessage": "Multiple items selected", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
         block(env, morph1, context, "highlight-code", [], {"lang": "handlebars"}, child0, null);
-        inline(env, morph2, context, "select-picker", [], {"content": get(env, context, "multipleContent"), "selection": get(env, context, "multipleValue"), "multiple": "true", "nativeMobile": "false", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
+        inline(env, morph2, context, "select-picker", [], {"content": get(env, context, "multipleContent"), "selection": get(env, context, "multipleValue"), "multiple": true, "nativeMobile": false, "optionLabelPath": "content.label", "optionValuePath": "content.value"});
         block(env, morph3, context, "highlight-code", [], {"lang": "handlebars"}, child1, null);
         return fragment;
       }
@@ -3566,7 +3566,7 @@ define('test-select-picker/templates/searching', ['exports'], function (exports)
         hasRendered: false,
         build: function build(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{{select-picker content=simpleSearchContent\n                selection=simpleSearchValue\n                multiple=\"true\"\n                liveSearch=\"true\"\n                optionGroupPath=\"group\"\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
+          var el1 = dom.createTextNode("{{select-picker content=simpleSearchContent\n                selection=simpleSearchValue\n                multiple=true\n                liveSearch=true\n                optionGroupPath=\"group\"\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -3602,7 +3602,7 @@ define('test-select-picker/templates/searching', ['exports'], function (exports)
         hasRendered: false,
         build: function build(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{{select-picker content=advancedSearchContent\n                selection=advancedSearchValue\n                multiple=\"true\"\n                liveSearch=\"advanced\"\n                optionGroupPath=\"group\"\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
+          var el1 = dom.createTextNode("{{select-picker content=advancedSearchContent\n                selection=advancedSearchValue\n                multiple=true\n                liveSearch=\"advanced\"\n                optionGroupPath=\"group\"\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -3638,7 +3638,7 @@ define('test-select-picker/templates/searching', ['exports'], function (exports)
         hasRendered: false,
         build: function build(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{{list-picker content=advancedSearchContent\n              selection=listSearchValue\n              multiple=\"true\"\n              liveSearch=\"advanced\"\n              optionGroupPath=\"group\"\n              optionLabelPath=\"content.label\"\n              optionValuePath=\"content.value\"}}\n");
+          var el1 = dom.createTextNode("{{list-picker content=advancedSearchContent\n              selection=listSearchValue\n              multiple=true\n              liveSearch=\"advanced\"\n              optionGroupPath=\"group\"\n              optionLabelPath=\"content.label\"\n              optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -3875,11 +3875,11 @@ define('test-select-picker/templates/searching', ['exports'], function (exports)
         var morph3 = dom.createMorphAt(dom.childAt(element1, [3]),1,1);
         var morph4 = dom.createMorphAt(dom.childAt(element2, [1]),1,1);
         var morph5 = dom.createMorphAt(dom.childAt(element2, [3]),1,1);
-        inline(env, morph0, context, "select-picker", [], {"content": get(env, context, "simpleSearchContent"), "selection": get(env, context, "simpleSearchValue"), "multiple": "true", "liveSearch": "true", "optionGroupPath": "group", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
+        inline(env, morph0, context, "select-picker", [], {"content": get(env, context, "simpleSearchContent"), "selection": get(env, context, "simpleSearchValue"), "multiple": true, "liveSearch": true, "optionGroupPath": "group", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
         block(env, morph1, context, "highlight-code", [], {"lang": "handlebars"}, child0, null);
-        inline(env, morph2, context, "select-picker", [], {"content": get(env, context, "advancedSearchContent"), "selection": get(env, context, "advancedSearchValue"), "multiple": "true", "liveSearch": "advanced", "optionGroupPath": "group", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
+        inline(env, morph2, context, "select-picker", [], {"content": get(env, context, "advancedSearchContent"), "selection": get(env, context, "advancedSearchValue"), "multiple": true, "liveSearch": "advanced", "optionGroupPath": "group", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
         block(env, morph3, context, "highlight-code", [], {"lang": "handlebars"}, child1, null);
-        inline(env, morph4, context, "list-picker", [], {"content": get(env, context, "listSearchContent"), "selection": get(env, context, "listSearchValue"), "multiple": "true", "liveSearch": "advanced", "optionGroupPath": "group", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
+        inline(env, morph4, context, "list-picker", [], {"content": get(env, context, "listSearchContent"), "selection": get(env, context, "listSearchValue"), "multiple": true, "liveSearch": "advanced", "optionGroupPath": "group", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
         block(env, morph5, context, "highlight-code", [], {"lang": "handlebars"}, child2, null);
         return fragment;
       }
@@ -3915,7 +3915,7 @@ catch(err) {
 if (runningTests) {
   require("test-select-picker/tests/test-helper");
 } else {
-  require("test-select-picker/app")["default"].create({"addonVersion":"1.4.0","name":"test-select-picker","version":"0.0.0.6bb896b7"});
+  require("test-select-picker/app")["default"].create({"addonVersion":"1.4.0","name":"test-select-picker","version":"0.0.0.ba4b3069"});
 }
 
 /* jshint ignore:end */
