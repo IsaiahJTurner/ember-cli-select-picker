@@ -1,3 +1,4 @@
+"use strict";
 /* jshint ignore:start */
 
 /* jshint ignore:end */
@@ -86,12 +87,12 @@ define('test-select-picker/components/keyboard-select-picker', ['exports', 'embe
     }),
 
     keyboardShortcuts: {
-      enter: 'selectActiveItem',
-      up: 'activePrev',
-      down: 'activeNext',
+      'enter': 'selectActiveItem',
+      'up': 'activePrev',
+      'down': 'activeNext',
       'shift+tab': 'activePrev',
-      tab: 'activeNext',
-      esc: 'closeDropdown'
+      'tab': 'activeNext',
+      'esc': 'closeDropdown'
     },
 
     actions: {
@@ -116,7 +117,8 @@ define('test-select-picker/components/keyboard-select-picker', ['exports', 'embe
         if (Ember['default'].isPresent(item)) {
           this.send('selectItem', item);
         }
-      }) }
+      })
+    }
   });
 
   exports['default'] = KeyboardSelectPickerComponent;
@@ -372,10 +374,26 @@ define('test-select-picker/initializers/export-application-global', ['exports', 
   exports.initialize = initialize;
 
   function initialize(container, application) {
-    var classifiedName = Ember['default'].String.classify(config['default'].modulePrefix);
+    if (config['default'].exportApplicationGlobal !== false) {
+      var value = config['default'].exportApplicationGlobal;
+      var globalName;
 
-    if (config['default'].exportApplicationGlobal && !window[classifiedName]) {
-      window[classifiedName] = application;
+      if (typeof value === 'string') {
+        globalName = value;
+      } else {
+        globalName = Ember['default'].String.classify(config['default'].modulePrefix);
+      }
+
+      if (!window[globalName]) {
+        window[globalName] = application;
+
+        application.reopen({
+          willDestroy: function willDestroy() {
+            this._super.apply(this, arguments);
+            delete window[globalName];
+          }
+        });
+      }
     }
   }
 
@@ -3915,7 +3933,7 @@ catch(err) {
 if (runningTests) {
   require("test-select-picker/tests/test-helper");
 } else {
-  require("test-select-picker/app")["default"].create({"addonVersion":"1.4.0","name":"test-select-picker","version":"0.0.0.ba4b3069"});
+  require("test-select-picker/app")["default"].create({"addonVersion":"1.4.2","name":"test-select-picker","version":"0.0.0.deafec06"});
 }
 
 /* jshint ignore:end */
