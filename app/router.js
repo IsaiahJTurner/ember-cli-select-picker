@@ -6,10 +6,12 @@ var Router = Ember.Router.extend({
   rootURL:  config.baseURL
 });
 
-export default Router.map(function() {
+Router.map(function() {
   this.route('install');
   this.route('searching');
   this.route('options');
   this.route('i18n');
   this.route('keyboard');
 });
+
+export default Router;
