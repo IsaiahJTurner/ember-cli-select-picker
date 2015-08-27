@@ -3,6 +3,15 @@
 
 /* jshint ignore:end */
 
+define('test-select-picker/acceptance-tests/main', ['exports', 'ember-cli-sri/acceptance-tests/main'], function (exports, main) {
+
+	'use strict';
+
+
+
+	exports['default'] = main['default'];
+
+});
 define('test-select-picker/app', ['exports', 'ember', 'ember/resolver', 'ember/load-initializers', 'test-select-picker/config/environment'], function (exports, Ember, Resolver, loadInitializers, config) {
 
   'use strict';
@@ -22,21 +31,30 @@ define('test-select-picker/app', ['exports', 'ember', 'ember/resolver', 'ember/l
   exports['default'] = App;
 
 });
+define('test-select-picker/components/app-version', ['exports', 'ember-cli-app-version/components/app-version', 'test-select-picker/config/environment'], function (exports, AppVersionComponent, config) {
+
+  'use strict';
+
+  var _config$APP = config['default'].APP;
+  var name = _config$APP.name;
+  var version = _config$APP.version;
+
+  exports['default'] = AppVersionComponent['default'].extend({
+    version: version,
+    name: name
+  });
+
+});
 define('test-select-picker/components/highlight-code', ['exports', 'ember'], function (exports, Ember) {
 
   'use strict';
 
-  var HighlightCodeComponent = Ember['default'].Component.extend({
-    tagName: 'pre',
+  exports['default'] = Ember['default'].Component.extend({
+    lang: 'nohighlight',
     didInsertElement: function didInsertElement() {
-      hljs.configure({ useBR: true });
-      var html = this.$().html().trim();
-      html = hljs.highlight(this.get('lang'), html).value;
-      this.$().html(html);
+      hljs.highlightBlock(this.$('code').get(0));
     }
   });
-
-  exports['default'] = HighlightCodeComponent;
 
 });
 define('test-select-picker/components/keyboard-select-picker', ['exports', 'ember', 'test-select-picker/components/select-picker', 'ember-keyboard-shortcuts/mixins/component'], function (exports, Ember, SelectPicker, KeyboardShortcutsMixin) {
@@ -64,13 +82,21 @@ define('test-select-picker/components/keyboard-select-picker', ['exports', 'embe
 
     classNames: ['select-picker', 'keyboard-select-picker'],
 
-    groupedContentList: Ember['default'].computed('groupedContentListWithoutActive', 'activeIndex', function () {
+    previousActiveIndex: 0,
+
+    updateActiveItem: Ember['default'].observer('activeCursor', 'contentList.length', function () {
+      var _this = this;
+
+      var previousActiveIndex = this.get('previousActiveIndex');
       var activeIndex = this.get('activeIndex');
-      var result = Ember['default'].A(this.get('groupedContentListWithoutActive'));
-      result.forEach(function (item, index) {
-        item.set('active', index === activeIndex);
+      if (Ember['default'].typeOf(activeIndex) !== 'number') {
+        return;
+      }
+      Ember['default'].changeProperties(function () {
+        _this.set('contentList.' + previousActiveIndex + '.active', false);
+        _this.set('contentList.' + activeIndex + '.active', true);
+        _this.set('previousActiveIndex', activeIndex);
       });
-      return result;
     }),
 
     activeIndex: Ember['default'].computed('activeCursor', 'contentList.length', function () {
@@ -131,34 +157,10 @@ define('test-select-picker/components/list-picker', ['exports', 'ember', 'ember-
   var I18nProps = Ember['default'].I18n && Ember['default'].I18n.TranslateableProperties || {};
 
   var ListPickerComponent = Ember['default'].Component.extend(SelectPickerMixin['default'], I18nProps, {
-
+    classNames: ['select-picker', 'list-picker'],
     selectAllLabel: 'Select All',
     selectNoneLabel: 'Select None',
-
-    nativeMobile: false,
-
-    classNames: ['select-picker', 'list-picker'],
-
-    groupedContentList: Ember['default'].computed('contentList.@each', function () {
-      var groups = Ember['default'].A();
-      var content = Ember['default'].A();
-      this.get('contentList').forEach(function (item) {
-        var header,
-            itemGroup = item.get('group');
-        var groupIndex = groups.indexOf(itemGroup);
-        if (groupIndex < 0) {
-          header = itemGroup;
-          groups.push(header);
-          content.push(Ember['default'].Object.create({
-            header: header,
-            items: Ember['default'].A([item])
-          }));
-        } else {
-          content[groupIndex].get('items').push(item);
-        }
-      });
-      return content;
-    })
+    nativeMobile: false
   });
 
   exports['default'] = ListPickerComponent;
@@ -232,6 +234,13 @@ define('test-select-picker/controllers/application', ['exports', 'ember', 'test-
   exports['default'] = ApplicationController;
 
 });
+define('test-select-picker/controllers/array', ['exports', 'ember'], function (exports, Ember) {
+
+	'use strict';
+
+	exports['default'] = Ember['default'].Controller;
+
+});
 define('test-select-picker/controllers/index', ['exports', 'ember'], function (exports, Ember) {
 
   'use strict';
@@ -288,6 +297,13 @@ define('test-select-picker/controllers/keyboard', ['exports', 'ember'], function
   exports['default'] = KeyboardController;
 
 });
+define('test-select-picker/controllers/object', ['exports', 'ember'], function (exports, Ember) {
+
+	'use strict';
+
+	exports['default'] = Ember['default'].Controller;
+
+});
 define('test-select-picker/controllers/options', ['exports', 'ember'], function (exports, Ember) {
 
   'use strict';
@@ -319,7 +335,13 @@ define('test-select-picker/controllers/options', ['exports', 'ember'], function 
       return chance.unique(chance.street, 10).map(function (street) {
         return { label: street, value: street, group: neighborhood() };
       }).sortBy('group');
-    }).property()
+    }).property(),
+
+    actions: {
+      sayHello: function sayHello() {
+        alert("Hello user!");
+      }
+    }
   });
 
 });
@@ -348,22 +370,17 @@ define('test-select-picker/controllers/searching', ['exports', 'ember'], functio
   exports['default'] = SearchingController;
 
 });
-define('test-select-picker/initializers/app-version', ['exports', 'test-select-picker/config/environment', 'ember'], function (exports, config, Ember) {
+define('test-select-picker/initializers/app-version', ['exports', 'ember-cli-app-version/initializer-factory', 'test-select-picker/config/environment'], function (exports, initializerFactory, config) {
 
   'use strict';
 
-  var classify = Ember['default'].String.classify;
-  var registered = false;
+  var _config$APP = config['default'].APP;
+  var name = _config$APP.name;
+  var version = _config$APP.version;
 
   exports['default'] = {
     name: 'App Version',
-    initialize: function initialize(container, application) {
-      if (!registered) {
-        var appName = classify(application.toString());
-        Ember['default'].libraries.register(appName, config['default'].APP.version);
-        registered = true;
-      }
-    }
+    initialize: initializerFactory['default'](name, version)
   };
 
 });
@@ -415,13 +432,15 @@ define('test-select-picker/router', ['exports', 'ember', 'test-select-picker/con
     rootURL: config['default'].baseURL
   });
 
-  exports['default'] = Router.map(function () {
+  Router.map(function () {
     this.route('install');
     this.route('searching');
     this.route('options');
     this.route('i18n');
     this.route('keyboard');
   });
+
+  exports['default'] = Router;
 
 });
 define('test-select-picker/templates/application', ['exports'], function (exports) {
@@ -432,47 +451,58 @@ define('test-select-picker/templates/application', ['exports'], function (export
     var child0 = (function() {
       var child0 = (function() {
         return {
-          isHTMLBars: true,
-          revision: "Ember@1.11.1",
-          blockParams: 0,
+          meta: {
+            "revision": "Ember@1.13.8",
+            "loc": {
+              "source": null,
+              "start": {
+                "line": 9,
+                "column": 8
+              },
+              "end": {
+                "line": 9,
+                "column": 52
+              }
+            },
+            "moduleName": "test-select-picker/templates/application.hbs"
+          },
+          arity: 0,
           cachedFragment: null,
           hasRendered: false,
-          build: function build(dom) {
+          buildFragment: function buildFragment(dom) {
             var el0 = dom.createDocumentFragment();
             var el1 = dom.createTextNode("Intro");
             dom.appendChild(el0, el1);
             return el0;
           },
-          render: function render(context, env, contextualElement) {
-            var dom = env.dom;
-            dom.detectNamespace(contextualElement);
-            var fragment;
-            if (env.useFragmentCache && dom.canClone) {
-              if (this.cachedFragment === null) {
-                fragment = this.build(dom);
-                if (this.hasRendered) {
-                  this.cachedFragment = fragment;
-                } else {
-                  this.hasRendered = true;
-                }
-              }
-              if (this.cachedFragment) {
-                fragment = dom.cloneNode(this.cachedFragment, true);
-              }
-            } else {
-              fragment = this.build(dom);
-            }
-            return fragment;
-          }
+          buildRenderNodes: function buildRenderNodes() { return []; },
+          statements: [
+
+          ],
+          locals: [],
+          templates: []
         };
       }());
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 0,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 8,
+              "column": 6
+            },
+            "end": {
+              "line": 10,
+              "column": 6
+            }
+          },
+          "moduleName": "test-select-picker/templates/application.hbs"
+        },
+        arity: 0,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode("        ");
           dom.appendChild(el0, el1);
@@ -482,76 +512,73 @@ define('test-select-picker/templates/application', ['exports'], function (export
           dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement) {
-          var dom = env.dom;
-          var hooks = env.hooks, block = hooks.block;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
-            }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
-            }
-          } else {
-            fragment = this.build(dom);
-          }
-          var morph0 = dom.createMorphAt(fragment,1,1,contextualElement);
-          block(env, morph0, context, "link-to", ["index"], {"class": "btn btn-lg"}, child0, null);
-          return fragment;
-        }
+        buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+          var morphs = new Array(1);
+          morphs[0] = dom.createMorphAt(fragment,1,1,contextualElement);
+          return morphs;
+        },
+        statements: [
+          ["block","link-to",["index"],["class","btn btn-lg"],0,null,["loc",[null,[9,8],[9,64]]]]
+        ],
+        locals: [],
+        templates: [child0]
       };
     }());
     var child1 = (function() {
       var child0 = (function() {
         return {
-          isHTMLBars: true,
-          revision: "Ember@1.11.1",
-          blockParams: 0,
+          meta: {
+            "revision": "Ember@1.13.8",
+            "loc": {
+              "source": null,
+              "start": {
+                "line": 12,
+                "column": 8
+              },
+              "end": {
+                "line": 12,
+                "column": 59
+              }
+            },
+            "moduleName": "test-select-picker/templates/application.hbs"
+          },
+          arity: 0,
           cachedFragment: null,
           hasRendered: false,
-          build: function build(dom) {
+          buildFragment: function buildFragment(dom) {
             var el0 = dom.createDocumentFragment();
             var el1 = dom.createTextNode("Installing");
             dom.appendChild(el0, el1);
             return el0;
           },
-          render: function render(context, env, contextualElement) {
-            var dom = env.dom;
-            dom.detectNamespace(contextualElement);
-            var fragment;
-            if (env.useFragmentCache && dom.canClone) {
-              if (this.cachedFragment === null) {
-                fragment = this.build(dom);
-                if (this.hasRendered) {
-                  this.cachedFragment = fragment;
-                } else {
-                  this.hasRendered = true;
-                }
-              }
-              if (this.cachedFragment) {
-                fragment = dom.cloneNode(this.cachedFragment, true);
-              }
-            } else {
-              fragment = this.build(dom);
-            }
-            return fragment;
-          }
+          buildRenderNodes: function buildRenderNodes() { return []; },
+          statements: [
+
+          ],
+          locals: [],
+          templates: []
         };
       }());
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 0,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 11,
+              "column": 6
+            },
+            "end": {
+              "line": 13,
+              "column": 6
+            }
+          },
+          "moduleName": "test-select-picker/templates/application.hbs"
+        },
+        arity: 0,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode("        ");
           dom.appendChild(el0, el1);
@@ -561,76 +588,73 @@ define('test-select-picker/templates/application', ['exports'], function (export
           dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement) {
-          var dom = env.dom;
-          var hooks = env.hooks, block = hooks.block;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
-            }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
-            }
-          } else {
-            fragment = this.build(dom);
-          }
-          var morph0 = dom.createMorphAt(fragment,1,1,contextualElement);
-          block(env, morph0, context, "link-to", ["install"], {"class": "btn btn-lg"}, child0, null);
-          return fragment;
-        }
+        buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+          var morphs = new Array(1);
+          morphs[0] = dom.createMorphAt(fragment,1,1,contextualElement);
+          return morphs;
+        },
+        statements: [
+          ["block","link-to",["install"],["class","btn btn-lg"],0,null,["loc",[null,[12,8],[12,71]]]]
+        ],
+        locals: [],
+        templates: [child0]
       };
     }());
     var child2 = (function() {
       var child0 = (function() {
         return {
-          isHTMLBars: true,
-          revision: "Ember@1.11.1",
-          blockParams: 0,
+          meta: {
+            "revision": "Ember@1.13.8",
+            "loc": {
+              "source": null,
+              "start": {
+                "line": 15,
+                "column": 8
+              },
+              "end": {
+                "line": 15,
+                "column": 60
+              }
+            },
+            "moduleName": "test-select-picker/templates/application.hbs"
+          },
+          arity: 0,
           cachedFragment: null,
           hasRendered: false,
-          build: function build(dom) {
+          buildFragment: function buildFragment(dom) {
             var el0 = dom.createDocumentFragment();
             var el1 = dom.createTextNode("Searching");
             dom.appendChild(el0, el1);
             return el0;
           },
-          render: function render(context, env, contextualElement) {
-            var dom = env.dom;
-            dom.detectNamespace(contextualElement);
-            var fragment;
-            if (env.useFragmentCache && dom.canClone) {
-              if (this.cachedFragment === null) {
-                fragment = this.build(dom);
-                if (this.hasRendered) {
-                  this.cachedFragment = fragment;
-                } else {
-                  this.hasRendered = true;
-                }
-              }
-              if (this.cachedFragment) {
-                fragment = dom.cloneNode(this.cachedFragment, true);
-              }
-            } else {
-              fragment = this.build(dom);
-            }
-            return fragment;
-          }
+          buildRenderNodes: function buildRenderNodes() { return []; },
+          statements: [
+
+          ],
+          locals: [],
+          templates: []
         };
       }());
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 0,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 14,
+              "column": 6
+            },
+            "end": {
+              "line": 16,
+              "column": 6
+            }
+          },
+          "moduleName": "test-select-picker/templates/application.hbs"
+        },
+        arity: 0,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode("        ");
           dom.appendChild(el0, el1);
@@ -640,76 +664,73 @@ define('test-select-picker/templates/application', ['exports'], function (export
           dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement) {
-          var dom = env.dom;
-          var hooks = env.hooks, block = hooks.block;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
-            }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
-            }
-          } else {
-            fragment = this.build(dom);
-          }
-          var morph0 = dom.createMorphAt(fragment,1,1,contextualElement);
-          block(env, morph0, context, "link-to", ["searching"], {"class": "btn btn-lg"}, child0, null);
-          return fragment;
-        }
+        buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+          var morphs = new Array(1);
+          morphs[0] = dom.createMorphAt(fragment,1,1,contextualElement);
+          return morphs;
+        },
+        statements: [
+          ["block","link-to",["searching"],["class","btn btn-lg"],0,null,["loc",[null,[15,8],[15,72]]]]
+        ],
+        locals: [],
+        templates: [child0]
       };
     }());
     var child3 = (function() {
       var child0 = (function() {
         return {
-          isHTMLBars: true,
-          revision: "Ember@1.11.1",
-          blockParams: 0,
+          meta: {
+            "revision": "Ember@1.13.8",
+            "loc": {
+              "source": null,
+              "start": {
+                "line": 18,
+                "column": 8
+              },
+              "end": {
+                "line": 18,
+                "column": 56
+              }
+            },
+            "moduleName": "test-select-picker/templates/application.hbs"
+          },
+          arity: 0,
           cachedFragment: null,
           hasRendered: false,
-          build: function build(dom) {
+          buildFragment: function buildFragment(dom) {
             var el0 = dom.createDocumentFragment();
             var el1 = dom.createTextNode("Options");
             dom.appendChild(el0, el1);
             return el0;
           },
-          render: function render(context, env, contextualElement) {
-            var dom = env.dom;
-            dom.detectNamespace(contextualElement);
-            var fragment;
-            if (env.useFragmentCache && dom.canClone) {
-              if (this.cachedFragment === null) {
-                fragment = this.build(dom);
-                if (this.hasRendered) {
-                  this.cachedFragment = fragment;
-                } else {
-                  this.hasRendered = true;
-                }
-              }
-              if (this.cachedFragment) {
-                fragment = dom.cloneNode(this.cachedFragment, true);
-              }
-            } else {
-              fragment = this.build(dom);
-            }
-            return fragment;
-          }
+          buildRenderNodes: function buildRenderNodes() { return []; },
+          statements: [
+
+          ],
+          locals: [],
+          templates: []
         };
       }());
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 0,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 17,
+              "column": 6
+            },
+            "end": {
+              "line": 19,
+              "column": 6
+            }
+          },
+          "moduleName": "test-select-picker/templates/application.hbs"
+        },
+        arity: 0,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode("        ");
           dom.appendChild(el0, el1);
@@ -719,76 +740,73 @@ define('test-select-picker/templates/application', ['exports'], function (export
           dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement) {
-          var dom = env.dom;
-          var hooks = env.hooks, block = hooks.block;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
-            }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
-            }
-          } else {
-            fragment = this.build(dom);
-          }
-          var morph0 = dom.createMorphAt(fragment,1,1,contextualElement);
-          block(env, morph0, context, "link-to", ["options"], {"class": "btn btn-lg"}, child0, null);
-          return fragment;
-        }
+        buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+          var morphs = new Array(1);
+          morphs[0] = dom.createMorphAt(fragment,1,1,contextualElement);
+          return morphs;
+        },
+        statements: [
+          ["block","link-to",["options"],["class","btn btn-lg"],0,null,["loc",[null,[18,8],[18,68]]]]
+        ],
+        locals: [],
+        templates: [child0]
       };
     }());
     var child4 = (function() {
       var child0 = (function() {
         return {
-          isHTMLBars: true,
-          revision: "Ember@1.11.1",
-          blockParams: 0,
+          meta: {
+            "revision": "Ember@1.13.8",
+            "loc": {
+              "source": null,
+              "start": {
+                "line": 21,
+                "column": 8
+              },
+              "end": {
+                "line": 21,
+                "column": 66
+              }
+            },
+            "moduleName": "test-select-picker/templates/application.hbs"
+          },
+          arity: 0,
           cachedFragment: null,
           hasRendered: false,
-          build: function build(dom) {
+          buildFragment: function buildFragment(dom) {
             var el0 = dom.createDocumentFragment();
             var el1 = dom.createTextNode("Internationalization");
             dom.appendChild(el0, el1);
             return el0;
           },
-          render: function render(context, env, contextualElement) {
-            var dom = env.dom;
-            dom.detectNamespace(contextualElement);
-            var fragment;
-            if (env.useFragmentCache && dom.canClone) {
-              if (this.cachedFragment === null) {
-                fragment = this.build(dom);
-                if (this.hasRendered) {
-                  this.cachedFragment = fragment;
-                } else {
-                  this.hasRendered = true;
-                }
-              }
-              if (this.cachedFragment) {
-                fragment = dom.cloneNode(this.cachedFragment, true);
-              }
-            } else {
-              fragment = this.build(dom);
-            }
-            return fragment;
-          }
+          buildRenderNodes: function buildRenderNodes() { return []; },
+          statements: [
+
+          ],
+          locals: [],
+          templates: []
         };
       }());
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 0,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 20,
+              "column": 6
+            },
+            "end": {
+              "line": 22,
+              "column": 6
+            }
+          },
+          "moduleName": "test-select-picker/templates/application.hbs"
+        },
+        arity: 0,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode("        ");
           dom.appendChild(el0, el1);
@@ -798,76 +816,73 @@ define('test-select-picker/templates/application', ['exports'], function (export
           dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement) {
-          var dom = env.dom;
-          var hooks = env.hooks, block = hooks.block;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
-            }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
-            }
-          } else {
-            fragment = this.build(dom);
-          }
-          var morph0 = dom.createMorphAt(fragment,1,1,contextualElement);
-          block(env, morph0, context, "link-to", ["i18n"], {"class": "btn btn-lg"}, child0, null);
-          return fragment;
-        }
+        buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+          var morphs = new Array(1);
+          morphs[0] = dom.createMorphAt(fragment,1,1,contextualElement);
+          return morphs;
+        },
+        statements: [
+          ["block","link-to",["i18n"],["class","btn btn-lg"],0,null,["loc",[null,[21,8],[21,78]]]]
+        ],
+        locals: [],
+        templates: [child0]
       };
     }());
     var child5 = (function() {
       var child0 = (function() {
         return {
-          isHTMLBars: true,
-          revision: "Ember@1.11.1",
-          blockParams: 0,
+          meta: {
+            "revision": "Ember@1.13.8",
+            "loc": {
+              "source": null,
+              "start": {
+                "line": 24,
+                "column": 8
+              },
+              "end": {
+                "line": 24,
+                "column": 66
+              }
+            },
+            "moduleName": "test-select-picker/templates/application.hbs"
+          },
+          arity: 0,
           cachedFragment: null,
           hasRendered: false,
-          build: function build(dom) {
+          buildFragment: function buildFragment(dom) {
             var el0 = dom.createDocumentFragment();
             var el1 = dom.createTextNode("Keyboard Support");
             dom.appendChild(el0, el1);
             return el0;
           },
-          render: function render(context, env, contextualElement) {
-            var dom = env.dom;
-            dom.detectNamespace(contextualElement);
-            var fragment;
-            if (env.useFragmentCache && dom.canClone) {
-              if (this.cachedFragment === null) {
-                fragment = this.build(dom);
-                if (this.hasRendered) {
-                  this.cachedFragment = fragment;
-                } else {
-                  this.hasRendered = true;
-                }
-              }
-              if (this.cachedFragment) {
-                fragment = dom.cloneNode(this.cachedFragment, true);
-              }
-            } else {
-              fragment = this.build(dom);
-            }
-            return fragment;
-          }
+          buildRenderNodes: function buildRenderNodes() { return []; },
+          statements: [
+
+          ],
+          locals: [],
+          templates: []
         };
       }());
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 0,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 23,
+              "column": 6
+            },
+            "end": {
+              "line": 25,
+              "column": 6
+            }
+          },
+          "moduleName": "test-select-picker/templates/application.hbs"
+        },
+        arity: 0,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode("        ");
           dom.appendChild(el0, el1);
@@ -877,39 +892,38 @@ define('test-select-picker/templates/application', ['exports'], function (export
           dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement) {
-          var dom = env.dom;
-          var hooks = env.hooks, block = hooks.block;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
-            }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
-            }
-          } else {
-            fragment = this.build(dom);
-          }
-          var morph0 = dom.createMorphAt(fragment,1,1,contextualElement);
-          block(env, morph0, context, "link-to", ["keyboard"], {"class": "btn btn-lg"}, child0, null);
-          return fragment;
-        }
+        buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+          var morphs = new Array(1);
+          morphs[0] = dom.createMorphAt(fragment,1,1,contextualElement);
+          return morphs;
+        },
+        statements: [
+          ["block","link-to",["keyboard"],["class","btn btn-lg"],0,null,["loc",[null,[24,8],[24,78]]]]
+        ],
+        locals: [],
+        templates: [child0]
       };
     }());
     return {
-      isHTMLBars: true,
-      revision: "Ember@1.11.1",
-      blockParams: 0,
+      meta: {
+        "revision": "Ember@1.13.8",
+        "loc": {
+          "source": null,
+          "start": {
+            "line": 1,
+            "column": 0
+          },
+          "end": {
+            "line": 45,
+            "column": 0
+          }
+        },
+        "moduleName": "test-select-picker/templates/application.hbs"
+      },
+      arity: 0,
       cachedFragment: null,
       hasRendered: false,
-      build: function build(dom) {
+      buildFragment: function buildFragment(dom) {
         var el0 = dom.createDocumentFragment();
         var el1 = dom.createElement("div");
         dom.setAttribute(el1,"class","container");
@@ -974,47 +988,369 @@ define('test-select-picker/templates/application', ['exports'], function (export
         dom.appendChild(el0, el1);
         return el0;
       },
-      render: function render(context, env, contextualElement) {
-        var dom = env.dom;
-        var hooks = env.hooks, content = hooks.content, block = hooks.block;
-        dom.detectNamespace(contextualElement);
-        var fragment;
-        if (env.useFragmentCache && dom.canClone) {
-          if (this.cachedFragment === null) {
-            fragment = this.build(dom);
-            if (this.hasRendered) {
-              this.cachedFragment = fragment;
-            } else {
-              this.hasRendered = true;
-            }
-          }
-          if (this.cachedFragment) {
-            fragment = dom.cloneNode(this.cachedFragment, true);
-          }
-        } else {
-          fragment = this.build(dom);
-        }
+      buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
         var element0 = dom.childAt(fragment, [0]);
         var element1 = dom.childAt(element0, [1]);
         var element2 = dom.childAt(element1, [7]);
-        var morph0 = dom.createMorphAt(dom.childAt(element1, [5, 0]),1,1);
-        var morph1 = dom.createMorphAt(element2,1,1);
-        var morph2 = dom.createMorphAt(element2,2,2);
-        var morph3 = dom.createMorphAt(element2,3,3);
-        var morph4 = dom.createMorphAt(element2,4,4);
-        var morph5 = dom.createMorphAt(element2,5,5);
-        var morph6 = dom.createMorphAt(element2,6,6);
-        var morph7 = dom.createMorphAt(element0,3,3);
-        content(env, morph0, context, "addonVersion");
-        block(env, morph1, context, "link-to", ["index"], {"tagName": "li"}, child0, null);
-        block(env, morph2, context, "link-to", ["install"], {"tagName": "li"}, child1, null);
-        block(env, morph3, context, "link-to", ["searching"], {"tagName": "li"}, child2, null);
-        block(env, morph4, context, "link-to", ["options"], {"tagName": "li"}, child3, null);
-        block(env, morph5, context, "link-to", ["i18n"], {"tagName": "li"}, child4, null);
-        block(env, morph6, context, "link-to", ["keyboard"], {"tagName": "li"}, child5, null);
-        content(env, morph7, context, "outlet");
-        return fragment;
-      }
+        var morphs = new Array(8);
+        morphs[0] = dom.createMorphAt(dom.childAt(element1, [5, 0]),1,1);
+        morphs[1] = dom.createMorphAt(element2,1,1);
+        morphs[2] = dom.createMorphAt(element2,2,2);
+        morphs[3] = dom.createMorphAt(element2,3,3);
+        morphs[4] = dom.createMorphAt(element2,4,4);
+        morphs[5] = dom.createMorphAt(element2,5,5);
+        morphs[6] = dom.createMorphAt(element2,6,6);
+        morphs[7] = dom.createMorphAt(element0,3,3);
+        return morphs;
+      },
+      statements: [
+        ["content","addonVersion",["loc",[null,[5,23],[5,39]]]],
+        ["block","link-to",["index"],["tagName","li"],0,null,["loc",[null,[8,6],[10,18]]]],
+        ["block","link-to",["install"],["tagName","li"],1,null,["loc",[null,[11,6],[13,18]]]],
+        ["block","link-to",["searching"],["tagName","li"],2,null,["loc",[null,[14,6],[16,18]]]],
+        ["block","link-to",["options"],["tagName","li"],3,null,["loc",[null,[17,6],[19,18]]]],
+        ["block","link-to",["i18n"],["tagName","li"],4,null,["loc",[null,[20,6],[22,18]]]],
+        ["block","link-to",["keyboard"],["tagName","li"],5,null,["loc",[null,[23,6],[25,18]]]],
+        ["content","outlet",["loc",[null,[30,2],[30,12]]]]
+      ],
+      locals: [],
+      templates: [child0, child1, child2, child3, child4, child5]
+    };
+  }()));
+
+});
+define('test-select-picker/templates/components/-native-select', ['exports'], function (exports) {
+
+  'use strict';
+
+  exports['default'] = Ember.HTMLBars.template((function() {
+    var child0 = (function() {
+      return {
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 5,
+              "column": 2
+            },
+            "end": {
+              "line": 7,
+              "column": 2
+            }
+          },
+          "moduleName": "test-select-picker/templates/components/-native-select.hbs"
+        },
+        arity: 0,
+        cachedFragment: null,
+        hasRendered: false,
+        buildFragment: function buildFragment(dom) {
+          var el0 = dom.createDocumentFragment();
+          var el1 = dom.createTextNode("    ");
+          dom.appendChild(el0, el1);
+          var el1 = dom.createElement("option");
+          dom.setAttribute(el1,"value","");
+          var el2 = dom.createComment("");
+          dom.appendChild(el1, el2);
+          dom.appendChild(el0, el1);
+          var el1 = dom.createTextNode("\n");
+          dom.appendChild(el0, el1);
+          return el0;
+        },
+        buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+          var morphs = new Array(1);
+          morphs[0] = dom.createMorphAt(dom.childAt(fragment, [1]),0,0);
+          return morphs;
+        },
+        statements: [
+          ["content","promptMessage",["loc",[null,[6,21],[6,38]]]]
+        ],
+        locals: [],
+        templates: []
+      };
+    }());
+    var child1 = (function() {
+      var child0 = (function() {
+        var child0 = (function() {
+          return {
+            meta: {
+              "revision": "Ember@1.13.8",
+              "loc": {
+                "source": null,
+                "start": {
+                  "line": 11,
+                  "column": 8
+                },
+                "end": {
+                  "line": 13,
+                  "column": 8
+                }
+              },
+              "moduleName": "test-select-picker/templates/components/-native-select.hbs"
+            },
+            arity: 1,
+            cachedFragment: null,
+            hasRendered: false,
+            buildFragment: function buildFragment(dom) {
+              var el0 = dom.createDocumentFragment();
+              var el1 = dom.createTextNode("          ");
+              dom.appendChild(el0, el1);
+              var el1 = dom.createElement("option");
+              var el2 = dom.createComment("");
+              dom.appendChild(el1, el2);
+              dom.appendChild(el0, el1);
+              var el1 = dom.createTextNode("\n");
+              dom.appendChild(el0, el1);
+              return el0;
+            },
+            buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+              var element1 = dom.childAt(fragment, [1]);
+              var morphs = new Array(3);
+              morphs[0] = dom.createAttrMorph(element1, 'value');
+              morphs[1] = dom.createAttrMorph(element1, 'selected');
+              morphs[2] = dom.createMorphAt(element1,0,0);
+              return morphs;
+            },
+            statements: [
+              ["attribute","value",["get","item.value",["loc",[null,[12,26],[12,36]]]]],
+              ["attribute","selected",["get","item.selected",["loc",[null,[12,50],[12,63]]]]],
+              ["content","item.label",["loc",[null,[12,66],[12,80]]]]
+            ],
+            locals: ["item"],
+            templates: []
+          };
+        }());
+        return {
+          meta: {
+            "revision": "Ember@1.13.8",
+            "loc": {
+              "source": null,
+              "start": {
+                "line": 9,
+                "column": 4
+              },
+              "end": {
+                "line": 15,
+                "column": 4
+              }
+            },
+            "moduleName": "test-select-picker/templates/components/-native-select.hbs"
+          },
+          arity: 1,
+          cachedFragment: null,
+          hasRendered: false,
+          buildFragment: function buildFragment(dom) {
+            var el0 = dom.createDocumentFragment();
+            var el1 = dom.createTextNode("      ");
+            dom.appendChild(el0, el1);
+            var el1 = dom.createElement("optgroup");
+            var el2 = dom.createTextNode("\n");
+            dom.appendChild(el1, el2);
+            var el2 = dom.createComment("");
+            dom.appendChild(el1, el2);
+            var el2 = dom.createTextNode("      ");
+            dom.appendChild(el1, el2);
+            dom.appendChild(el0, el1);
+            var el1 = dom.createTextNode("\n");
+            dom.appendChild(el0, el1);
+            return el0;
+          },
+          buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+            var element2 = dom.childAt(fragment, [1]);
+            var morphs = new Array(2);
+            morphs[0] = dom.createAttrMorph(element2, 'label');
+            morphs[1] = dom.createMorphAt(element2,1,1);
+            return morphs;
+          },
+          statements: [
+            ["attribute","label",["get","group.name",["loc",[null,[10,24],[10,34]]]]],
+            ["block","each",[["get","group.items",["loc",[null,[11,16],[11,27]]]]],[],0,null,["loc",[null,[11,8],[13,17]]]]
+          ],
+          locals: ["group"],
+          templates: [child0]
+        };
+      }());
+      return {
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 8,
+              "column": 2
+            },
+            "end": {
+              "line": 16,
+              "column": 2
+            }
+          },
+          "moduleName": "test-select-picker/templates/components/-native-select.hbs"
+        },
+        arity: 0,
+        cachedFragment: null,
+        hasRendered: false,
+        buildFragment: function buildFragment(dom) {
+          var el0 = dom.createDocumentFragment();
+          var el1 = dom.createComment("");
+          dom.appendChild(el0, el1);
+          return el0;
+        },
+        buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+          var morphs = new Array(1);
+          morphs[0] = dom.createMorphAt(fragment,0,0,contextualElement);
+          dom.insertBoundary(fragment, 0);
+          dom.insertBoundary(fragment, null);
+          return morphs;
+        },
+        statements: [
+          ["block","each",[["get","nestedGroupContentList",["loc",[null,[9,12],[9,34]]]]],[],0,null,["loc",[null,[9,4],[15,13]]]]
+        ],
+        locals: [],
+        templates: [child0]
+      };
+    }());
+    var child2 = (function() {
+      var child0 = (function() {
+        return {
+          meta: {
+            "revision": "Ember@1.13.8",
+            "loc": {
+              "source": null,
+              "start": {
+                "line": 17,
+                "column": 4
+              },
+              "end": {
+                "line": 19,
+                "column": 4
+              }
+            },
+            "moduleName": "test-select-picker/templates/components/-native-select.hbs"
+          },
+          arity: 1,
+          cachedFragment: null,
+          hasRendered: false,
+          buildFragment: function buildFragment(dom) {
+            var el0 = dom.createDocumentFragment();
+            var el1 = dom.createTextNode("      ");
+            dom.appendChild(el0, el1);
+            var el1 = dom.createElement("option");
+            var el2 = dom.createComment("");
+            dom.appendChild(el1, el2);
+            dom.appendChild(el0, el1);
+            var el1 = dom.createTextNode("\n");
+            dom.appendChild(el0, el1);
+            return el0;
+          },
+          buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+            var element0 = dom.childAt(fragment, [1]);
+            var morphs = new Array(3);
+            morphs[0] = dom.createAttrMorph(element0, 'value');
+            morphs[1] = dom.createAttrMorph(element0, 'selected');
+            morphs[2] = dom.createMorphAt(element0,0,0);
+            return morphs;
+          },
+          statements: [
+            ["attribute","value",["get","item.value",["loc",[null,[18,22],[18,32]]]]],
+            ["attribute","selected",["get","item.selected",["loc",[null,[18,46],[18,59]]]]],
+            ["content","item.label",["loc",[null,[18,62],[18,76]]]]
+          ],
+          locals: ["item"],
+          templates: []
+        };
+      }());
+      return {
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 16,
+              "column": 2
+            },
+            "end": {
+              "line": 20,
+              "column": 2
+            }
+          },
+          "moduleName": "test-select-picker/templates/components/-native-select.hbs"
+        },
+        arity: 0,
+        cachedFragment: null,
+        hasRendered: false,
+        buildFragment: function buildFragment(dom) {
+          var el0 = dom.createDocumentFragment();
+          var el1 = dom.createComment("");
+          dom.appendChild(el0, el1);
+          return el0;
+        },
+        buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+          var morphs = new Array(1);
+          morphs[0] = dom.createMorphAt(fragment,0,0,contextualElement);
+          dom.insertBoundary(fragment, 0);
+          dom.insertBoundary(fragment, null);
+          return morphs;
+        },
+        statements: [
+          ["block","each",[["get","contentList",["loc",[null,[17,12],[17,23]]]]],[],0,null,["loc",[null,[17,4],[19,13]]]]
+        ],
+        locals: [],
+        templates: [child0]
+      };
+    }());
+    return {
+      meta: {
+        "revision": "Ember@1.13.8",
+        "loc": {
+          "source": null,
+          "start": {
+            "line": 1,
+            "column": 0
+          },
+          "end": {
+            "line": 22,
+            "column": 0
+          }
+        },
+        "moduleName": "test-select-picker/templates/components/-native-select.hbs"
+      },
+      arity: 0,
+      cachedFragment: null,
+      hasRendered: false,
+      buildFragment: function buildFragment(dom) {
+        var el0 = dom.createDocumentFragment();
+        var el1 = dom.createElement("select");
+        dom.setAttribute(el1,"class","native-select form-control");
+        var el2 = dom.createTextNode("\n");
+        dom.appendChild(el1, el2);
+        var el2 = dom.createComment("");
+        dom.appendChild(el1, el2);
+        var el2 = dom.createComment("");
+        dom.appendChild(el1, el2);
+        dom.appendChild(el0, el1);
+        var el1 = dom.createTextNode("\n");
+        dom.appendChild(el0, el1);
+        return el0;
+      },
+      buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+        var element3 = dom.childAt(fragment, [0]);
+        var morphs = new Array(5);
+        morphs[0] = dom.createAttrMorph(element3, 'title');
+        morphs[1] = dom.createAttrMorph(element3, 'multiple');
+        morphs[2] = dom.createElementMorph(element3);
+        morphs[3] = dom.createMorphAt(element3,1,1);
+        morphs[4] = dom.createMorphAt(element3,2,2);
+        return morphs;
+      },
+      statements: [
+        ["attribute","title",["get","title",["loc",[null,[2,16],[2,21]]]]],
+        ["attribute","multiple",["get","multiple",["loc",[null,[3,19],[3,27]]]]],
+        ["element","action",["selectByValue"],["on","change"],["loc",[null,[4,8],[4,46]]]],
+        ["block","if",[["get","showNativePrompt",["loc",[null,[5,8],[5,24]]]]],[],0,null,["loc",[null,[5,2],[7,9]]]],
+        ["block","if",[["get","nestedGroupContentList.firstObject.name",["loc",[null,[8,8],[8,47]]]]],[],1,2,["loc",[null,[8,2],[20,9]]]]
+      ],
+      locals: [],
+      templates: [child0, child1, child2]
     };
   }()));
 
@@ -1025,44 +1361,49 @@ define('test-select-picker/templates/components/highlight-code', ['exports'], fu
 
   exports['default'] = Ember.HTMLBars.template((function() {
     return {
-      isHTMLBars: true,
-      revision: "Ember@1.11.1",
-      blockParams: 0,
+      meta: {
+        "revision": "Ember@1.13.8",
+        "loc": {
+          "source": null,
+          "start": {
+            "line": 1,
+            "column": 0
+          },
+          "end": {
+            "line": 2,
+            "column": 0
+          }
+        },
+        "moduleName": "test-select-picker/templates/components/highlight-code.hbs"
+      },
+      arity: 0,
       cachedFragment: null,
       hasRendered: false,
-      build: function build(dom) {
+      buildFragment: function buildFragment(dom) {
         var el0 = dom.createDocumentFragment();
-        var el1 = dom.createComment("");
+        var el1 = dom.createElement("pre");
+        var el2 = dom.createElement("code");
+        var el3 = dom.createComment("");
+        dom.appendChild(el2, el3);
+        dom.appendChild(el1, el2);
         dom.appendChild(el0, el1);
         var el1 = dom.createTextNode("\n");
         dom.appendChild(el0, el1);
         return el0;
       },
-      render: function render(context, env, contextualElement) {
-        var dom = env.dom;
-        var hooks = env.hooks, content = hooks.content;
-        dom.detectNamespace(contextualElement);
-        var fragment;
-        if (env.useFragmentCache && dom.canClone) {
-          if (this.cachedFragment === null) {
-            fragment = this.build(dom);
-            if (this.hasRendered) {
-              this.cachedFragment = fragment;
-            } else {
-              this.hasRendered = true;
-            }
-          }
-          if (this.cachedFragment) {
-            fragment = dom.cloneNode(this.cachedFragment, true);
-          }
-        } else {
-          fragment = this.build(dom);
-        }
-        var morph0 = dom.createUnsafeMorphAt(fragment,0,0,contextualElement);
-        dom.insertBoundary(fragment, 0);
-        content(env, morph0, context, "yield");
-        return fragment;
-      }
+      buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+        var element0 = dom.childAt(fragment, [0, 0]);
+        var morphs = new Array(2);
+        morphs[0] = dom.createAttrMorph(element0, 'class');
+        morphs[1] = dom.createMorphAt(element0,0,0);
+        return morphs;
+      },
+      statements: [
+        ["attribute","class",["concat",[["get","lang",["loc",[null,[1,20],[1,24]]]]]]],
+        ["content","yield",["loc",[null,[1,28],[1,37]]]]
+      ],
+      locals: [],
+      templates: []
     };
   }()));
 
@@ -1074,12 +1415,81 @@ define('test-select-picker/templates/components/list-picker', ['exports'], funct
   exports['default'] = Ember.HTMLBars.template((function() {
     var child0 = (function() {
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 0,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 1,
+              "column": 0
+            },
+            "end": {
+              "line": 6,
+              "column": 0
+            }
+          },
+          "moduleName": "test-select-picker/templates/components/list-picker.hbs"
+        },
+        arity: 0,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
+          var el0 = dom.createDocumentFragment();
+          var el1 = dom.createTextNode("  ");
+          dom.appendChild(el0, el1);
+          var el1 = dom.createElement("div");
+          dom.setAttribute(el1,"class","visible-xs-inline");
+          var el2 = dom.createTextNode("\n    ");
+          dom.appendChild(el1, el2);
+          var el2 = dom.createComment("");
+          dom.appendChild(el1, el2);
+          var el2 = dom.createTextNode("\n    ");
+          dom.appendChild(el1, el2);
+          var el2 = dom.createComment("");
+          dom.appendChild(el1, el2);
+          var el2 = dom.createTextNode("\n  ");
+          dom.appendChild(el1, el2);
+          dom.appendChild(el0, el1);
+          var el1 = dom.createTextNode("\n");
+          dom.appendChild(el0, el1);
+          return el0;
+        },
+        buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+          var element9 = dom.childAt(fragment, [1]);
+          var morphs = new Array(2);
+          morphs[0] = dom.createMorphAt(element9,1,1);
+          morphs[1] = dom.createMorphAt(element9,3,3);
+          return morphs;
+        },
+        statements: [
+          ["content","yield",["loc",[null,[3,4],[3,13]]]],
+          ["inline","partial",["components/native-select"],[],["loc",[null,[4,4],[4,42]]]]
+        ],
+        locals: [],
+        templates: []
+      };
+    }());
+    var child1 = (function() {
+      return {
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 11,
+              "column": 2
+            },
+            "end": {
+              "line": 23,
+              "column": 2
+            }
+          },
+          "moduleName": "test-select-picker/templates/components/list-picker.hbs"
+        },
+        arity: 0,
+        cachedFragment: null,
+        hasRendered: false,
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode("    ");
           dom.appendChild(el0, el1);
@@ -1116,45 +1526,46 @@ define('test-select-picker/templates/components/list-picker', ['exports'], funct
           dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement) {
-          var dom = env.dom;
-          var hooks = env.hooks, get = hooks.get, inline = hooks.inline, element = hooks.element;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
-            }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
-            }
-          } else {
-            fragment = this.build(dom);
-          }
+        buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
           var element7 = dom.childAt(fragment, [1]);
           var element8 = dom.childAt(element7, [3, 1]);
-          var morph0 = dom.createMorphAt(element7,1,1);
-          inline(env, morph0, context, "input", [], {"type": "text", "class": "search-filter form-control", "value": get(env, context, "searchFilter"), "action": "preventClosing", "on": "focus"});
-          element(env, element8, context, "bind-attr", [], {"disabled": get(env, context, "clearSearchDisabled")});
-          element(env, element8, context, "action", ["clearFilter"], {});
-          return fragment;
-        }
+          var morphs = new Array(3);
+          morphs[0] = dom.createMorphAt(element7,1,1);
+          morphs[1] = dom.createAttrMorph(element8, 'disabled');
+          morphs[2] = dom.createElementMorph(element8);
+          return morphs;
+        },
+        statements: [
+          ["inline","input",[],["type","text","class","search-filter form-control","value",["subexpr","@mut",[["get","searchFilter",["loc",[null,[13,67],[13,79]]]]],[],[]],"focus","preventClosing"],["loc",[null,[13,6],[13,104]]]],
+          ["attribute","disabled",["get","clearSearchDisabled",["loc",[null,[17,27],[17,46]]]]],
+          ["element","action",["clearFilter"],[],["loc",[null,[18,16],[18,40]]]]
+        ],
+        locals: [],
+        templates: []
       };
     }());
-    var child1 = (function() {
+    var child2 = (function() {
       var child0 = (function() {
         return {
-          isHTMLBars: true,
-          revision: "Ember@1.11.1",
-          blockParams: 0,
+          meta: {
+            "revision": "Ember@1.13.8",
+            "loc": {
+              "source": null,
+              "start": {
+                "line": 25,
+                "column": 4
+              },
+              "end": {
+                "line": 30,
+                "column": 4
+              }
+            },
+            "moduleName": "test-select-picker/templates/components/list-picker.hbs"
+          },
+          arity: 0,
           cachedFragment: null,
           hasRendered: false,
-          build: function build(dom) {
+          buildFragment: function buildFragment(dom) {
             var el0 = dom.createDocumentFragment();
             var el1 = dom.createTextNode("      ");
             dom.appendChild(el0, el1);
@@ -1185,47 +1596,48 @@ define('test-select-picker/templates/components/list-picker', ['exports'], funct
             dom.appendChild(el0, el1);
             return el0;
           },
-          render: function render(context, env, contextualElement) {
-            var dom = env.dom;
-            var hooks = env.hooks, element = hooks.element, content = hooks.content;
-            dom.detectNamespace(contextualElement);
-            var fragment;
-            if (env.useFragmentCache && dom.canClone) {
-              if (this.cachedFragment === null) {
-                fragment = this.build(dom);
-                if (this.hasRendered) {
-                  this.cachedFragment = fragment;
-                } else {
-                  this.hasRendered = true;
-                }
-              }
-              if (this.cachedFragment) {
-                fragment = dom.cloneNode(this.cachedFragment, true);
-              }
-            } else {
-              fragment = this.build(dom);
-            }
+          buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
             var element4 = dom.childAt(fragment, [1]);
             var element5 = dom.childAt(element4, [1]);
             var element6 = dom.childAt(element4, [3]);
-            var morph0 = dom.createMorphAt(element5,0,0);
-            var morph1 = dom.createMorphAt(element6,0,0);
-            element(env, element5, context, "action", ["selectAllNone", "unselectedContentList"], {});
-            content(env, morph0, context, "selectAllLabel");
-            element(env, element6, context, "action", ["selectAllNone", "selectedContentList"], {});
-            content(env, morph1, context, "selectNoneLabel");
-            return fragment;
-          }
+            var morphs = new Array(4);
+            morphs[0] = dom.createElementMorph(element5);
+            morphs[1] = dom.createMorphAt(element5,0,0);
+            morphs[2] = dom.createElementMorph(element6);
+            morphs[3] = dom.createMorphAt(element6,0,0);
+            return morphs;
+          },
+          statements: [
+            ["element","action",["selectAllNone","unselectedContentList"],[],["loc",[null,[27,54],[27,104]]]],
+            ["content","selectAllLabel",["loc",[null,[27,105],[27,123]]]],
+            ["element","action",["selectAllNone","selectedContentList"],[],["loc",[null,[28,54],[28,102]]]],
+            ["content","selectNoneLabel",["loc",[null,[28,103],[28,122]]]]
+          ],
+          locals: [],
+          templates: []
         };
       }());
       var child1 = (function() {
         return {
-          isHTMLBars: true,
-          revision: "Ember@1.11.1",
-          blockParams: 0,
+          meta: {
+            "revision": "Ember@1.13.8",
+            "loc": {
+              "source": null,
+              "start": {
+                "line": 30,
+                "column": 4
+              },
+              "end": {
+                "line": 37,
+                "column": 4
+              }
+            },
+            "moduleName": "test-select-picker/templates/components/list-picker.hbs"
+          },
+          arity: 0,
           cachedFragment: null,
           hasRendered: false,
-          build: function build(dom) {
+          buildFragment: function buildFragment(dom) {
             var el0 = dom.createDocumentFragment();
             var el1 = dom.createTextNode("      ");
             dom.appendChild(el0, el1);
@@ -1255,131 +1667,126 @@ define('test-select-picker/templates/components/list-picker', ['exports'], funct
             dom.appendChild(el0, el1);
             return el0;
           },
-          render: function render(context, env, contextualElement) {
-            var dom = env.dom;
-            var hooks = env.hooks, element = hooks.element, content = hooks.content;
-            dom.detectNamespace(contextualElement);
-            var fragment;
-            if (env.useFragmentCache && dom.canClone) {
-              if (this.cachedFragment === null) {
-                fragment = this.build(dom);
-                if (this.hasRendered) {
-                  this.cachedFragment = fragment;
-                } else {
-                  this.hasRendered = true;
-                }
-              }
-              if (this.cachedFragment) {
-                fragment = dom.cloneNode(this.cachedFragment, true);
-              }
-            } else {
-              fragment = this.build(dom);
-            }
+          buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
             var element2 = dom.childAt(fragment, [1, 1]);
             var element3 = dom.childAt(element2, [3]);
-            var morph0 = dom.createMorphAt(element2,1,1);
-            element(env, element2, context, "action", ["toggleSelectAllNone"], {});
-            content(env, morph0, context, "selectAllNoneLabel");
-            element(env, element3, context, "bind-attr", [], {"class": ":check-mark :glyphicon glyphiconClass"});
-            return fragment;
-          }
+            var morphs = new Array(3);
+            morphs[0] = dom.createElementMorph(element2);
+            morphs[1] = dom.createMorphAt(element2,1,1);
+            morphs[2] = dom.createAttrMorph(element3, 'class');
+            return morphs;
+          },
+          statements: [
+            ["element","action",["toggleSelectAllNone"],[],["loc",[null,[32,54],[32,86]]]],
+            ["content","selectAllNoneLabel",["loc",[null,[33,10],[33,32]]]],
+            ["attribute","class",["concat",["check-mark glyphicon ",["get","glyphiconClass",["loc",[null,[34,46],[34,60]]]]]]]
+          ],
+          locals: [],
+          templates: []
         };
       }());
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 0,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 24,
+              "column": 2
+            },
+            "end": {
+              "line": 38,
+              "column": 2
+            }
+          },
+          "moduleName": "test-select-picker/templates/components/list-picker.hbs"
+        },
+        arity: 0,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createComment("");
           dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement) {
-          var dom = env.dom;
-          var hooks = env.hooks, get = hooks.get, block = hooks.block;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
-            }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
-            }
-          } else {
-            fragment = this.build(dom);
-          }
-          var morph0 = dom.createMorphAt(fragment,0,0,contextualElement);
-          dom.insertBoundary(fragment, null);
+        buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+          var morphs = new Array(1);
+          morphs[0] = dom.createMorphAt(fragment,0,0,contextualElement);
           dom.insertBoundary(fragment, 0);
-          block(env, morph0, context, "if", [get(env, context, "splitAllNoneButtons")], {}, child0, child1);
-          return fragment;
-        }
+          dom.insertBoundary(fragment, null);
+          return morphs;
+        },
+        statements: [
+          ["block","if",[["get","splitAllNoneButtons",["loc",[null,[25,10],[25,29]]]]],[],0,1,["loc",[null,[25,4],[37,11]]]]
+        ],
+        locals: [],
+        templates: [child0, child1]
       };
     }());
-    var child2 = (function() {
+    var child3 = (function() {
       var child0 = (function() {
         return {
-          isHTMLBars: true,
-          revision: "Ember@1.11.1",
-          blockParams: 0,
+          meta: {
+            "revision": "Ember@1.13.8",
+            "loc": {
+              "source": null,
+              "start": {
+                "line": 40,
+                "column": 4
+              },
+              "end": {
+                "line": 40,
+                "column": 65
+              }
+            },
+            "moduleName": "test-select-picker/templates/components/list-picker.hbs"
+          },
+          arity: 0,
           cachedFragment: null,
           hasRendered: false,
-          build: function build(dom) {
+          buildFragment: function buildFragment(dom) {
             var el0 = dom.createDocumentFragment();
-            var el1 = dom.createTextNode("      ");
-            dom.appendChild(el0, el1);
             var el1 = dom.createElement("h4");
             dom.setAttribute(el1,"role","presentation");
             var el2 = dom.createComment("");
             dom.appendChild(el1, el2);
             dom.appendChild(el0, el1);
-            var el1 = dom.createTextNode("\n");
-            dom.appendChild(el0, el1);
             return el0;
           },
-          render: function render(context, env, contextualElement) {
-            var dom = env.dom;
-            var hooks = env.hooks, content = hooks.content;
-            dom.detectNamespace(contextualElement);
-            var fragment;
-            if (env.useFragmentCache && dom.canClone) {
-              if (this.cachedFragment === null) {
-                fragment = this.build(dom);
-                if (this.hasRendered) {
-                  this.cachedFragment = fragment;
-                } else {
-                  this.hasRendered = true;
-                }
-              }
-              if (this.cachedFragment) {
-                fragment = dom.cloneNode(this.cachedFragment, true);
-              }
-            } else {
-              fragment = this.build(dom);
-            }
-            var morph0 = dom.createMorphAt(dom.childAt(fragment, [1]),0,0);
-            content(env, morph0, context, "group.header");
-            return fragment;
-          }
+          buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+            var morphs = new Array(1);
+            morphs[0] = dom.createMorphAt(dom.childAt(fragment, [0]),0,0);
+            return morphs;
+          },
+          statements: [
+            ["content","group.name",["loc",[null,[40,46],[40,60]]]]
+          ],
+          locals: [],
+          templates: []
         };
       }());
       var child1 = (function() {
         return {
-          isHTMLBars: true,
-          revision: "Ember@1.11.1",
-          blockParams: 1,
+          meta: {
+            "revision": "Ember@1.13.8",
+            "loc": {
+              "source": null,
+              "start": {
+                "line": 42,
+                "column": 6
+              },
+              "end": {
+                "line": 49,
+                "column": 6
+              }
+            },
+            "moduleName": "test-select-picker/templates/components/list-picker.hbs"
+          },
+          arity: 1,
           cachedFragment: null,
           hasRendered: false,
-          build: function build(dom) {
+          buildFragment: function buildFragment(dom) {
             var el0 = dom.createDocumentFragment();
             var el1 = dom.createTextNode("        ");
             dom.appendChild(el0, el1);
@@ -1400,49 +1807,52 @@ define('test-select-picker/templates/components/list-picker', ['exports'], funct
             dom.appendChild(el0, el1);
             return el0;
           },
-          render: function render(context, env, contextualElement, blockArguments) {
-            var dom = env.dom;
-            var hooks = env.hooks, set = hooks.set, get = hooks.get, element = hooks.element, content = hooks.content;
-            dom.detectNamespace(contextualElement);
-            var fragment;
-            if (env.useFragmentCache && dom.canClone) {
-              if (this.cachedFragment === null) {
-                fragment = this.build(dom);
-                if (this.hasRendered) {
-                  this.cachedFragment = fragment;
-                } else {
-                  this.hasRendered = true;
-                }
-              }
-              if (this.cachedFragment) {
-                fragment = dom.cloneNode(this.cachedFragment, true);
-              }
-            } else {
-              fragment = this.build(dom);
-            }
+          buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
             var element0 = dom.childAt(fragment, [1]);
             var element1 = dom.childAt(element0, [3]);
-            var morph0 = dom.createMorphAt(element0,1,1);
-            set(env, context, "item", blockArguments[0]);
-            element(env, element0, context, "action", ["selectItem", get(env, context, "item")], {});
-            element(env, element0, context, "bind-attr", [], {"class": ":btn :btn-default item.selected:active"});
-            content(env, morph0, context, "item.label");
-            element(env, element1, context, "bind-attr", [], {"class": ":glyphicon :glyphicon-ok :check-mark item.selected::invisible"});
-            return fragment;
-          }
+            var morphs = new Array(4);
+            morphs[0] = dom.createAttrMorph(element0, 'class');
+            morphs[1] = dom.createElementMorph(element0);
+            morphs[2] = dom.createMorphAt(element0,1,1);
+            morphs[3] = dom.createAttrMorph(element1, 'class');
+            return morphs;
+          },
+          statements: [
+            ["attribute","class",["concat",["btn btn-default ",["subexpr","if",[["get","item.selected",["loc",[null,[45,44],[45,57]]]],"active"],[],["loc",[null,[45,39],[45,68]]]]]]],
+            ["element","action",["selectItem",["get","item",["loc",[null,[44,38],[44,42]]]]],[],["loc",[null,[44,16],[44,44]]]],
+            ["content","item.label",["loc",[null,[46,10],[46,24]]]],
+            ["attribute","class",["concat",["glyphicon glyphicon-ok check-mark ",["subexpr","unless",[["get","item.selected",["loc",[null,[47,66],[47,79]]]],"invisible"],[],["loc",[null,[47,57],[47,93]]]]]]]
+          ],
+          locals: ["item"],
+          templates: []
         };
       }());
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 1,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 39,
+              "column": 2
+            },
+            "end": {
+              "line": 51,
+              "column": 2
+            }
+          },
+          "moduleName": "test-select-picker/templates/components/list-picker.hbs"
+        },
+        arity: 1,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
+          var el1 = dom.createTextNode("    ");
+          dom.appendChild(el0, el1);
           var el1 = dom.createComment("");
           dom.appendChild(el0, el1);
-          var el1 = dom.createTextNode("    ");
+          var el1 = dom.createTextNode("\n    ");
           dom.appendChild(el0, el1);
           var el1 = dom.createElement("div");
           dom.setAttribute(el1,"role","group");
@@ -1458,50 +1868,51 @@ define('test-select-picker/templates/components/list-picker', ['exports'], funct
           dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement, blockArguments) {
-          var dom = env.dom;
-          var hooks = env.hooks, set = hooks.set, get = hooks.get, block = hooks.block;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
-            }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
-            }
-          } else {
-            fragment = this.build(dom);
-          }
-          var morph0 = dom.createMorphAt(fragment,0,0,contextualElement);
-          var morph1 = dom.createMorphAt(dom.childAt(fragment, [2]),1,1);
-          dom.insertBoundary(fragment, 0);
-          set(env, context, "group", blockArguments[0]);
-          block(env, morph0, context, "if", [get(env, context, "group.header")], {}, child0, null);
-          block(env, morph1, context, "each", [get(env, context, "group.items")], {}, child1, null);
-          return fragment;
-        }
+        buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+          var morphs = new Array(2);
+          morphs[0] = dom.createMorphAt(fragment,1,1,contextualElement);
+          morphs[1] = dom.createMorphAt(dom.childAt(fragment, [3]),1,1);
+          return morphs;
+        },
+        statements: [
+          ["block","if",[["get","group.name",["loc",[null,[40,10],[40,20]]]]],[],0,null,["loc",[null,[40,4],[40,72]]]],
+          ["block","each",[["get","group.items",["loc",[null,[42,14],[42,25]]]]],[],1,null,["loc",[null,[42,6],[49,15]]]]
+        ],
+        locals: ["group"],
+        templates: [child0, child1]
       };
     }());
     return {
-      isHTMLBars: true,
-      revision: "Ember@1.11.1",
-      blockParams: 0,
+      meta: {
+        "revision": "Ember@1.13.8",
+        "loc": {
+          "source": null,
+          "start": {
+            "line": 1,
+            "column": 0
+          },
+          "end": {
+            "line": 53,
+            "column": 0
+          }
+        },
+        "moduleName": "test-select-picker/templates/components/list-picker.hbs"
+      },
+      arity: 0,
       cachedFragment: null,
       hasRendered: false,
-      build: function build(dom) {
+      buildFragment: function buildFragment(dom) {
         var el0 = dom.createDocumentFragment();
         var el1 = dom.createComment("");
         dom.appendChild(el0, el1);
-        var el1 = dom.createTextNode("\n\n");
+        var el1 = dom.createTextNode("\n");
         dom.appendChild(el0, el1);
         var el1 = dom.createElement("div");
-        var el2 = dom.createTextNode("\n");
+        var el2 = dom.createTextNode("\n  ");
+        dom.appendChild(el1, el2);
+        var el2 = dom.createComment("");
+        dom.appendChild(el1, el2);
+        var el2 = dom.createTextNode("\n\n");
         dom.appendChild(el1, el2);
         var el2 = dom.createComment("");
         dom.appendChild(el1, el2);
@@ -1514,39 +1925,28 @@ define('test-select-picker/templates/components/list-picker', ['exports'], funct
         dom.appendChild(el0, el1);
         return el0;
       },
-      render: function render(context, env, contextualElement) {
-        var dom = env.dom;
-        var hooks = env.hooks, get = hooks.get, inline = hooks.inline, element = hooks.element, block = hooks.block;
-        dom.detectNamespace(contextualElement);
-        var fragment;
-        if (env.useFragmentCache && dom.canClone) {
-          if (this.cachedFragment === null) {
-            fragment = this.build(dom);
-            if (this.hasRendered) {
-              this.cachedFragment = fragment;
-            } else {
-              this.hasRendered = true;
-            }
-          }
-          if (this.cachedFragment) {
-            fragment = dom.cloneNode(this.cachedFragment, true);
-          }
-        } else {
-          fragment = this.build(dom);
-        }
-        var element9 = dom.childAt(fragment, [2]);
-        var morph0 = dom.createMorphAt(fragment,0,0,contextualElement);
-        var morph1 = dom.createMorphAt(element9,1,1);
-        var morph2 = dom.createMorphAt(element9,2,2);
-        var morph3 = dom.createMorphAt(element9,3,3);
+      buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+        var element10 = dom.childAt(fragment, [2]);
+        var morphs = new Array(6);
+        morphs[0] = dom.createMorphAt(fragment,0,0,contextualElement);
+        morphs[1] = dom.createAttrMorph(element10, 'class');
+        morphs[2] = dom.createMorphAt(element10,1,1);
+        morphs[3] = dom.createMorphAt(element10,3,3);
+        morphs[4] = dom.createMorphAt(element10,4,4);
+        morphs[5] = dom.createMorphAt(element10,5,5);
         dom.insertBoundary(fragment, 0);
-        inline(env, morph0, context, "view", ["select"], {"class": "native-select form-control", "classNameBindings": "nativeMobile:visible-xs-inline:hidden", "content": get(env, context, "content"), "selection": get(env, context, "selection"), "value": get(env, context, "value"), "title": get(env, context, "title"), "prompt": get(env, context, "prompt"), "multiple": get(env, context, "multiple"), "disabled": get(env, context, "disabled"), "optionGroupPath": get(env, context, "optionGroupPath"), "optionLabelPath": get(env, context, "optionLabelPath"), "optionValuePath": get(env, context, "optionValuePath")});
-        element(env, element9, context, "bind-attr", [], {"class": ":bs-select nativeMobile:hidden-xs disabled:disabled"});
-        block(env, morph1, context, "if", [get(env, context, "liveSearch")], {}, child0, null);
-        block(env, morph2, context, "if", [get(env, context, "multiple")], {}, child1, null);
-        block(env, morph3, context, "each", [get(env, context, "groupedContentList")], {}, child2, null);
-        return fragment;
-      }
+        return morphs;
+      },
+      statements: [
+        ["block","if",[["get","nativeMobile",["loc",[null,[1,6],[1,18]]]]],[],0,null,["loc",[null,[1,0],[6,7]]]],
+        ["attribute","class",["concat",["bs-select ",["subexpr","if",[["get","nativeMobile",["loc",[null,[8,27],[8,39]]]],"hidden-xs"],[],["loc",[null,[8,22],[8,53]]]]," ",["subexpr","if",[["get","disabled",["loc",[null,[8,59],[8,67]]]],"disabled"],[],["loc",[null,[8,54],[8,80]]]]]]],
+        ["content","yield",["loc",[null,[9,2],[9,11]]]],
+        ["block","if",[["get","liveSearch",["loc",[null,[11,8],[11,18]]]]],[],1,null,["loc",[null,[11,2],[23,9]]]],
+        ["block","if",[["get","multiple",["loc",[null,[24,8],[24,16]]]]],[],2,null,["loc",[null,[24,2],[38,9]]]],
+        ["block","each",[["get","nestedGroupContentList",["loc",[null,[39,10],[39,32]]]]],[],3,null,["loc",[null,[39,2],[51,11]]]]
+      ],
+      locals: [],
+      templates: [child0, child1, child2, child3]
     };
   }()));
 
@@ -1558,12 +1958,81 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
   exports['default'] = Ember.HTMLBars.template((function() {
     var child0 = (function() {
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 0,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 1,
+              "column": 0
+            },
+            "end": {
+              "line": 6,
+              "column": 0
+            }
+          },
+          "moduleName": "test-select-picker/templates/components/select-picker.hbs"
+        },
+        arity: 0,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
+          var el0 = dom.createDocumentFragment();
+          var el1 = dom.createTextNode("  ");
+          dom.appendChild(el0, el1);
+          var el1 = dom.createElement("div");
+          dom.setAttribute(el1,"class","visible-xs-inline");
+          var el2 = dom.createTextNode("\n    ");
+          dom.appendChild(el1, el2);
+          var el2 = dom.createComment("");
+          dom.appendChild(el1, el2);
+          var el2 = dom.createTextNode("\n    ");
+          dom.appendChild(el1, el2);
+          var el2 = dom.createComment("");
+          dom.appendChild(el1, el2);
+          var el2 = dom.createTextNode("\n  ");
+          dom.appendChild(el1, el2);
+          dom.appendChild(el0, el1);
+          var el1 = dom.createTextNode("\n");
+          dom.appendChild(el0, el1);
+          return el0;
+        },
+        buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+          var element8 = dom.childAt(fragment, [1]);
+          var morphs = new Array(2);
+          morphs[0] = dom.createMorphAt(element8,1,1);
+          morphs[1] = dom.createMorphAt(element8,3,3);
+          return morphs;
+        },
+        statements: [
+          ["content","yield",["loc",[null,[3,4],[3,13]]]],
+          ["inline","partial",["components/native-select"],[],["loc",[null,[4,4],[4,42]]]]
+        ],
+        locals: [],
+        templates: []
+      };
+    }());
+    var child1 = (function() {
+      return {
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 24,
+              "column": 4
+            },
+            "end": {
+              "line": 28,
+              "column": 4
+            }
+          },
+          "moduleName": "test-select-picker/templates/components/select-picker.hbs"
+        },
+        arity: 0,
+        cachedFragment: null,
+        hasRendered: false,
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode("      ");
           dom.appendChild(el0, el1);
@@ -1579,41 +2048,40 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
           dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement) {
-          var dom = env.dom;
-          var hooks = env.hooks, get = hooks.get, inline = hooks.inline;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
-            }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
-            }
-          } else {
-            fragment = this.build(dom);
-          }
-          var morph0 = dom.createMorphAt(dom.childAt(fragment, [1]),1,1);
-          inline(env, morph0, context, "input", [], {"type": "text", "class": "search-filter form-control", "value": get(env, context, "searchFilter"), "action": "preventClosing", "on": "focus"});
-          return fragment;
-        }
+        buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+          var morphs = new Array(1);
+          morphs[0] = dom.createMorphAt(dom.childAt(fragment, [1]),1,1);
+          return morphs;
+        },
+        statements: [
+          ["inline","input",[],["type","text","class","search-filter form-control","value",["subexpr","@mut",[["get","searchFilter",["loc",[null,[26,69],[26,81]]]]],[],[]],"focus","preventClosing"],["loc",[null,[26,8],[26,106]]]]
+        ],
+        locals: [],
+        templates: []
       };
     }());
-    var child1 = (function() {
+    var child2 = (function() {
       var child0 = (function() {
         return {
-          isHTMLBars: true,
-          revision: "Ember@1.11.1",
-          blockParams: 0,
+          meta: {
+            "revision": "Ember@1.13.8",
+            "loc": {
+              "source": null,
+              "start": {
+                "line": 31,
+                "column": 8
+              },
+              "end": {
+                "line": 36,
+                "column": 8
+              }
+            },
+            "moduleName": "test-select-picker/templates/components/select-picker.hbs"
+          },
+          arity: 0,
           cachedFragment: null,
           hasRendered: false,
-          build: function build(dom) {
+          buildFragment: function buildFragment(dom) {
             var el0 = dom.createDocumentFragment();
             var el1 = dom.createTextNode("          ");
             dom.appendChild(el0, el1);
@@ -1644,47 +2112,48 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
             dom.appendChild(el0, el1);
             return el0;
           },
-          render: function render(context, env, contextualElement) {
-            var dom = env.dom;
-            var hooks = env.hooks, element = hooks.element, content = hooks.content;
-            dom.detectNamespace(contextualElement);
-            var fragment;
-            if (env.useFragmentCache && dom.canClone) {
-              if (this.cachedFragment === null) {
-                fragment = this.build(dom);
-                if (this.hasRendered) {
-                  this.cachedFragment = fragment;
-                } else {
-                  this.hasRendered = true;
-                }
-              }
-              if (this.cachedFragment) {
-                fragment = dom.cloneNode(this.cachedFragment, true);
-              }
-            } else {
-              fragment = this.build(dom);
-            }
+          buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
             var element5 = dom.childAt(fragment, [1]);
             var element6 = dom.childAt(element5, [1]);
             var element7 = dom.childAt(element5, [3]);
-            var morph0 = dom.createMorphAt(element6,0,0);
-            var morph1 = dom.createMorphAt(element7,0,0);
-            element(env, element6, context, "action", ["selectAllNone", "unselectedContentList"], {});
-            content(env, morph0, context, "selectAllLabel");
-            element(env, element7, context, "action", ["selectAllNone", "selectedContentList"], {});
-            content(env, morph1, context, "selectNoneLabel");
-            return fragment;
-          }
+            var morphs = new Array(4);
+            morphs[0] = dom.createElementMorph(element6);
+            morphs[1] = dom.createMorphAt(element6,0,0);
+            morphs[2] = dom.createElementMorph(element7);
+            morphs[3] = dom.createMorphAt(element7,0,0);
+            return morphs;
+          },
+          statements: [
+            ["element","action",["selectAllNone","unselectedContentList"],[],["loc",[null,[33,65],[33,115]]]],
+            ["content","selectAllLabel",["loc",[null,[33,116],[33,134]]]],
+            ["element","action",["selectAllNone","selectedContentList"],[],["loc",[null,[34,65],[34,113]]]],
+            ["content","selectNoneLabel",["loc",[null,[34,114],[34,133]]]]
+          ],
+          locals: [],
+          templates: []
         };
       }());
       var child1 = (function() {
         return {
-          isHTMLBars: true,
-          revision: "Ember@1.11.1",
-          blockParams: 0,
+          meta: {
+            "revision": "Ember@1.13.8",
+            "loc": {
+              "source": null,
+              "start": {
+                "line": 36,
+                "column": 8
+              },
+              "end": {
+                "line": 41,
+                "column": 8
+              }
+            },
+            "moduleName": "test-select-picker/templates/components/select-picker.hbs"
+          },
+          arity: 0,
           cachedFragment: null,
           hasRendered: false,
-          build: function build(dom) {
+          buildFragment: function buildFragment(dom) {
             var el0 = dom.createDocumentFragment();
             var el1 = dom.createTextNode("          ");
             dom.appendChild(el0, el1);
@@ -1706,43 +2175,44 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
             dom.appendChild(el0, el1);
             return el0;
           },
-          render: function render(context, env, contextualElement) {
-            var dom = env.dom;
-            var hooks = env.hooks, element = hooks.element, content = hooks.content;
-            dom.detectNamespace(contextualElement);
-            var fragment;
-            if (env.useFragmentCache && dom.canClone) {
-              if (this.cachedFragment === null) {
-                fragment = this.build(dom);
-                if (this.hasRendered) {
-                  this.cachedFragment = fragment;
-                } else {
-                  this.hasRendered = true;
-                }
-              }
-              if (this.cachedFragment) {
-                fragment = dom.cloneNode(this.cachedFragment, true);
-              }
-            } else {
-              fragment = this.build(dom);
-            }
+          buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
             var element3 = dom.childAt(fragment, [1]);
             var element4 = dom.childAt(element3, [3]);
-            var morph0 = dom.createMorphAt(element3,1,1);
-            element(env, element3, context, "action", ["toggleSelectAllNone"], {});
-            content(env, morph0, context, "selectAllNoneLabel");
-            element(env, element4, context, "bind-attr", [], {"class": ":check-mark :glyphicon glyphiconClass"});
-            return fragment;
-          }
+            var morphs = new Array(3);
+            morphs[0] = dom.createElementMorph(element3);
+            morphs[1] = dom.createMorphAt(element3,1,1);
+            morphs[2] = dom.createAttrMorph(element4, 'class');
+            return morphs;
+          },
+          statements: [
+            ["element","action",["toggleSelectAllNone"],[],["loc",[null,[37,73],[37,105]]]],
+            ["content","selectAllNoneLabel",["loc",[null,[38,12],[38,34]]]],
+            ["attribute","class",["concat",["check-mark glyphicon ",["get","glyphiconClass",["loc",[null,[39,48],[39,62]]]]]]]
+          ],
+          locals: [],
+          templates: []
         };
       }());
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 0,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 29,
+              "column": 4
+            },
+            "end": {
+              "line": 43,
+              "column": 4
+            }
+          },
+          "moduleName": "test-select-picker/templates/components/select-picker.hbs"
+        },
+        arity: 0,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode("      ");
           dom.appendChild(el0, el1);
@@ -1758,208 +2228,243 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
           dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement) {
-          var dom = env.dom;
-          var hooks = env.hooks, get = hooks.get, block = hooks.block;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
-            }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
-            }
-          } else {
-            fragment = this.build(dom);
-          }
-          var morph0 = dom.createMorphAt(dom.childAt(fragment, [1]),1,1);
-          block(env, morph0, context, "if", [get(env, context, "splitAllNoneButtons")], {}, child0, child1);
-          return fragment;
-        }
+        buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+          var morphs = new Array(1);
+          morphs[0] = dom.createMorphAt(dom.childAt(fragment, [1]),1,1);
+          return morphs;
+        },
+        statements: [
+          ["block","if",[["get","splitAllNoneButtons",["loc",[null,[31,14],[31,33]]]]],[],0,1,["loc",[null,[31,8],[41,15]]]]
+        ],
+        locals: [],
+        templates: [child0, child1]
       };
     }());
-    var child2 = (function() {
+    var child3 = (function() {
       var child0 = (function() {
-        var child0 = (function() {
-          return {
-            isHTMLBars: true,
-            revision: "Ember@1.11.1",
-            blockParams: 0,
-            cachedFragment: null,
-            hasRendered: false,
-            build: function build(dom) {
-              var el0 = dom.createDocumentFragment();
-              var el1 = dom.createElement("li");
-              dom.setAttribute(el1,"class","divider");
-              dom.setAttribute(el1,"role","presentation");
-              dom.appendChild(el0, el1);
-              return el0;
-            },
-            render: function render(context, env, contextualElement) {
-              var dom = env.dom;
-              dom.detectNamespace(contextualElement);
-              var fragment;
-              if (env.useFragmentCache && dom.canClone) {
-                if (this.cachedFragment === null) {
-                  fragment = this.build(dom);
-                  if (this.hasRendered) {
-                    this.cachedFragment = fragment;
-                  } else {
-                    this.hasRendered = true;
-                  }
-                }
-                if (this.cachedFragment) {
-                  fragment = dom.cloneNode(this.cachedFragment, true);
-                }
-              } else {
-                fragment = this.build(dom);
-              }
-              return fragment;
-            }
-          };
-        }());
         return {
-          isHTMLBars: true,
-          revision: "Ember@1.11.1",
-          blockParams: 0,
+          meta: {
+            "revision": "Ember@1.13.8",
+            "loc": {
+              "source": null,
+              "start": {
+                "line": 45,
+                "column": 6
+              },
+              "end": {
+                "line": 45,
+                "column": 92
+              }
+            },
+            "moduleName": "test-select-picker/templates/components/select-picker.hbs"
+          },
+          arity: 0,
           cachedFragment: null,
           hasRendered: false,
-          build: function build(dom) {
+          buildFragment: function buildFragment(dom) {
             var el0 = dom.createDocumentFragment();
-            var el1 = dom.createTextNode("        ");
+            var el1 = dom.createElement("li");
+            dom.setAttribute(el1,"class","divider");
+            dom.setAttribute(el1,"role","presentation");
             dom.appendChild(el0, el1);
-            var el1 = dom.createComment("");
-            dom.appendChild(el0, el1);
-            var el1 = dom.createTextNode("\n        ");
-            dom.appendChild(el0, el1);
+            return el0;
+          },
+          buildRenderNodes: function buildRenderNodes() { return []; },
+          statements: [
+
+          ],
+          locals: [],
+          templates: []
+        };
+      }());
+      var child1 = (function() {
+        return {
+          meta: {
+            "revision": "Ember@1.13.8",
+            "loc": {
+              "source": null,
+              "start": {
+                "line": 46,
+                "column": 6
+              },
+              "end": {
+                "line": 46,
+                "column": 91
+              }
+            },
+            "moduleName": "test-select-picker/templates/components/select-picker.hbs"
+          },
+          arity: 0,
+          cachedFragment: null,
+          hasRendered: false,
+          buildFragment: function buildFragment(dom) {
+            var el0 = dom.createDocumentFragment();
             var el1 = dom.createElement("li");
             dom.setAttribute(el1,"class","dropdown-header");
             dom.setAttribute(el1,"role","presentation");
             var el2 = dom.createComment("");
             dom.appendChild(el1, el2);
             dom.appendChild(el0, el1);
+            return el0;
+          },
+          buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+            var morphs = new Array(1);
+            morphs[0] = dom.createMorphAt(dom.childAt(fragment, [0]),0,0);
+            return morphs;
+          },
+          statements: [
+            ["content","group.name",["loc",[null,[46,72],[46,86]]]]
+          ],
+          locals: [],
+          templates: []
+        };
+      }());
+      var child2 = (function() {
+        return {
+          meta: {
+            "revision": "Ember@1.13.8",
+            "loc": {
+              "source": null,
+              "start": {
+                "line": 47,
+                "column": 6
+              },
+              "end": {
+                "line": 54,
+                "column": 6
+              }
+            },
+            "moduleName": "test-select-picker/templates/components/select-picker.hbs"
+          },
+          arity: 1,
+          cachedFragment: null,
+          hasRendered: false,
+          buildFragment: function buildFragment(dom) {
+            var el0 = dom.createDocumentFragment();
+            var el1 = dom.createTextNode("        ");
+            dom.appendChild(el0, el1);
+            var el1 = dom.createElement("li");
+            dom.setAttribute(el1,"role","presentation");
+            var el2 = dom.createTextNode("\n          ");
+            dom.appendChild(el1, el2);
+            var el2 = dom.createElement("a");
+            dom.setAttribute(el2,"role","menuitem");
+            dom.setAttribute(el2,"tabindex","-1");
+            var el3 = dom.createTextNode("\n            ");
+            dom.appendChild(el2, el3);
+            var el3 = dom.createComment("");
+            dom.appendChild(el2, el3);
+            var el3 = dom.createTextNode("\n            ");
+            dom.appendChild(el2, el3);
+            var el3 = dom.createElement("span");
+            dom.appendChild(el2, el3);
+            var el3 = dom.createTextNode("\n          ");
+            dom.appendChild(el2, el3);
+            dom.appendChild(el1, el2);
+            var el2 = dom.createTextNode("\n        ");
+            dom.appendChild(el1, el2);
+            dom.appendChild(el0, el1);
             var el1 = dom.createTextNode("\n");
             dom.appendChild(el0, el1);
             return el0;
           },
-          render: function render(context, env, contextualElement) {
-            var dom = env.dom;
-            var hooks = env.hooks, get = hooks.get, block = hooks.block, content = hooks.content;
-            dom.detectNamespace(contextualElement);
-            var fragment;
-            if (env.useFragmentCache && dom.canClone) {
-              if (this.cachedFragment === null) {
-                fragment = this.build(dom);
-                if (this.hasRendered) {
-                  this.cachedFragment = fragment;
-                } else {
-                  this.hasRendered = true;
-                }
-              }
-              if (this.cachedFragment) {
-                fragment = dom.cloneNode(this.cachedFragment, true);
-              }
-            } else {
-              fragment = this.build(dom);
-            }
-            var morph0 = dom.createMorphAt(fragment,1,1,contextualElement);
-            var morph1 = dom.createMorphAt(dom.childAt(fragment, [3]),0,0);
-            block(env, morph0, context, "unless", [get(env, context, "item.first")], {}, child0, null);
-            content(env, morph1, context, "item.group");
-            return fragment;
-          }
+          buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+            var element0 = dom.childAt(fragment, [1]);
+            var element1 = dom.childAt(element0, [1]);
+            var element2 = dom.childAt(element1, [3]);
+            var morphs = new Array(4);
+            morphs[0] = dom.createAttrMorph(element0, 'class');
+            morphs[1] = dom.createElementMorph(element1);
+            morphs[2] = dom.createMorphAt(element1,1,1);
+            morphs[3] = dom.createAttrMorph(element2, 'class');
+            return morphs;
+          },
+          statements: [
+            ["attribute","class",["concat",[["subexpr","if",[["get","item.active",["loc",[null,[48,44],[48,55]]]],"active"],[],["loc",[null,[48,39],[48,66]]]]," ",["subexpr","if",[["get","item.selected",["loc",[null,[48,72],[48,85]]]],"selected"],[],["loc",[null,[48,67],[48,98]]]]]]],
+            ["element","action",["selectItem",["get","item",["loc",[null,[49,65],[49,69]]]]],[],["loc",[null,[49,43],[49,71]]]],
+            ["content","item.label",["loc",[null,[50,12],[50,26]]]],
+            ["attribute","class",["concat",["glyphicon glyphicon-ok check-mark ",["subexpr","if",[["get","item.selected",["loc",[null,[51,64],[51,77]]]],"","hidden"],[],["loc",[null,[51,59],[51,91]]]]]]]
+          ],
+          locals: ["item"],
+          templates: []
         };
       }());
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 1,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 44,
+              "column": 4
+            },
+            "end": {
+              "line": 55,
+              "column": 4
+            }
+          },
+          "moduleName": "test-select-picker/templates/components/select-picker.hbs"
+        },
+        arity: 1,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createComment("");
-          dom.appendChild(el0, el1);
           var el1 = dom.createTextNode("      ");
           dom.appendChild(el0, el1);
-          var el1 = dom.createElement("li");
-          dom.setAttribute(el1,"role","presentation");
-          var el2 = dom.createTextNode("\n        ");
-          dom.appendChild(el1, el2);
-          var el2 = dom.createElement("a");
-          dom.setAttribute(el2,"role","menuitem");
-          dom.setAttribute(el2,"tabindex","-1");
-          var el3 = dom.createTextNode("\n          ");
-          dom.appendChild(el2, el3);
-          var el3 = dom.createComment("");
-          dom.appendChild(el2, el3);
-          var el3 = dom.createTextNode("\n          ");
-          dom.appendChild(el2, el3);
-          var el3 = dom.createElement("span");
-          dom.appendChild(el2, el3);
-          var el3 = dom.createTextNode("\n        ");
-          dom.appendChild(el2, el3);
-          dom.appendChild(el1, el2);
-          var el2 = dom.createTextNode("\n      ");
-          dom.appendChild(el1, el2);
+          var el1 = dom.createComment("");
+          dom.appendChild(el0, el1);
+          var el1 = dom.createTextNode("\n      ");
+          dom.appendChild(el0, el1);
+          var el1 = dom.createComment("");
           dom.appendChild(el0, el1);
           var el1 = dom.createTextNode("\n");
           dom.appendChild(el0, el1);
+          var el1 = dom.createComment("");
+          dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement, blockArguments) {
-          var dom = env.dom;
-          var hooks = env.hooks, set = hooks.set, get = hooks.get, block = hooks.block, element = hooks.element, content = hooks.content;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
-            }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
-            }
-          } else {
-            fragment = this.build(dom);
-          }
-          var element0 = dom.childAt(fragment, [2]);
-          var element1 = dom.childAt(element0, [1]);
-          var element2 = dom.childAt(element1, [3]);
-          var morph0 = dom.createMorphAt(fragment,0,0,contextualElement);
-          var morph1 = dom.createMorphAt(element1,1,1);
-          dom.insertBoundary(fragment, 0);
-          set(env, context, "item", blockArguments[0]);
-          block(env, morph0, context, "if", [get(env, context, "item.group")], {}, child0, null);
-          element(env, element0, context, "bind-attr", [], {"class": "item.active:active item.selected:selected"});
-          element(env, element1, context, "action", ["selectItem", get(env, context, "item")], {});
-          content(env, morph1, context, "item.label");
-          element(env, element2, context, "bind-attr", [], {"class": ":glyphicon :glyphicon-ok :check-mark item.selected::hidden"});
-          return fragment;
-        }
+        buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+          var morphs = new Array(3);
+          morphs[0] = dom.createMorphAt(fragment,1,1,contextualElement);
+          morphs[1] = dom.createMorphAt(fragment,3,3,contextualElement);
+          morphs[2] = dom.createMorphAt(fragment,5,5,contextualElement);
+          dom.insertBoundary(fragment, null);
+          return morphs;
+        },
+        statements: [
+          ["block","unless",[["get","group.items.firstObject.first",["loc",[null,[45,16],[45,45]]]]],[],0,null,["loc",[null,[45,6],[45,103]]]],
+          ["block","if",[["get","group.name",["loc",[null,[46,12],[46,22]]]]],[],1,null,["loc",[null,[46,6],[46,98]]]],
+          ["block","each",[["get","group.items",["loc",[null,[47,14],[47,25]]]]],[],2,null,["loc",[null,[47,6],[54,15]]]]
+        ],
+        locals: ["group"],
+        templates: [child0, child1, child2]
       };
     }());
     return {
-      isHTMLBars: true,
-      revision: "Ember@1.11.1",
-      blockParams: 0,
+      meta: {
+        "revision": "Ember@1.13.8",
+        "loc": {
+          "source": null,
+          "start": {
+            "line": 1,
+            "column": 0
+          },
+          "end": {
+            "line": 58,
+            "column": 0
+          }
+        },
+        "moduleName": "test-select-picker/templates/components/select-picker.hbs"
+      },
+      arity: 0,
       cachedFragment: null,
       hasRendered: false,
-      build: function build(dom) {
+      buildFragment: function buildFragment(dom) {
         var el0 = dom.createDocumentFragment();
         var el1 = dom.createComment("");
         dom.appendChild(el0, el1);
-        var el1 = dom.createTextNode("\n\n");
+        var el1 = dom.createTextNode("\n");
         dom.appendChild(el0, el1);
         var el1 = dom.createElement("div");
         var el2 = dom.createTextNode("\n  ");
@@ -1992,6 +2497,16 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
         var el2 = dom.createElement("ul");
         dom.setAttribute(el2,"class","dropdown-menu");
         dom.setAttribute(el2,"role","menu");
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("li");
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createComment("");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n    ");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
         var el3 = dom.createTextNode("\n");
         dom.appendChild(el2, el3);
         var el3 = dom.createComment("");
@@ -2010,53 +2525,48 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
         dom.appendChild(el0, el1);
         return el0;
       },
-      render: function render(context, env, contextualElement) {
-        var dom = env.dom;
-        var hooks = env.hooks, get = hooks.get, inline = hooks.inline, element = hooks.element, content = hooks.content, block = hooks.block;
-        dom.detectNamespace(contextualElement);
-        var fragment;
-        if (env.useFragmentCache && dom.canClone) {
-          if (this.cachedFragment === null) {
-            fragment = this.build(dom);
-            if (this.hasRendered) {
-              this.cachedFragment = fragment;
-            } else {
-              this.hasRendered = true;
-            }
-          }
-          if (this.cachedFragment) {
-            fragment = dom.cloneNode(this.cachedFragment, true);
-          }
-        } else {
-          fragment = this.build(dom);
-        }
-        var element8 = dom.childAt(fragment, [2]);
-        var element9 = dom.childAt(element8, [1]);
+      buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+        var element9 = dom.childAt(fragment, [2]);
         var element10 = dom.childAt(element9, [1]);
-        var element11 = dom.childAt(element10, [3]);
-        var element12 = dom.childAt(element8, [3]);
-        var morph0 = dom.createMorphAt(fragment,0,0,contextualElement);
-        var morph1 = dom.createMorphAt(element10,1,1);
-        var morph2 = dom.createMorphAt(element11,0,0);
-        var morph3 = dom.createMorphAt(element12,1,1);
-        var morph4 = dom.createMorphAt(element12,2,2);
-        var morph5 = dom.createMorphAt(element12,3,3);
+        var element11 = dom.childAt(element10, [1]);
+        var element12 = dom.childAt(element11, [3]);
+        var element13 = dom.childAt(element9, [3]);
+        var morphs = new Array(14);
+        morphs[0] = dom.createMorphAt(fragment,0,0,contextualElement);
+        morphs[1] = dom.createAttrMorph(element9, 'class');
+        morphs[2] = dom.createAttrMorph(element10, 'class');
+        morphs[3] = dom.createAttrMorph(element10, 'id');
+        morphs[4] = dom.createAttrMorph(element10, 'disabled');
+        morphs[5] = dom.createElementMorph(element10);
+        morphs[6] = dom.createMorphAt(element11,1,1);
+        morphs[7] = dom.createAttrMorph(element12, 'class');
+        morphs[8] = dom.createMorphAt(element12,0,0);
+        morphs[9] = dom.createAttrMorph(element13, 'aria-labelledby');
+        morphs[10] = dom.createMorphAt(dom.childAt(element13, [1]),1,1);
+        morphs[11] = dom.createMorphAt(element13,3,3);
+        morphs[12] = dom.createMorphAt(element13,4,4);
+        morphs[13] = dom.createMorphAt(element13,5,5);
         dom.insertBoundary(fragment, 0);
-        inline(env, morph0, context, "view", ["select"], {"class": "native-select form-control", "classNameBindings": "nativeMobile:visible-xs-inline:hidden", "content": get(env, context, "content"), "selection": get(env, context, "selection"), "value": get(env, context, "value"), "title": get(env, context, "title"), "prompt": get(env, context, "prompt"), "multiple": get(env, context, "multiple"), "disabled": get(env, context, "disabled"), "optionGroupPath": get(env, context, "optionGroupPath"), "optionLabelPath": get(env, context, "optionLabelPath"), "optionValuePath": get(env, context, "optionValuePath")});
-        element(env, element8, context, "bind-attr", [], {"class": ":bs-select :dropdown nativeMobile:hidden-xs disabled:disabled showDropdown:open"});
-        element(env, element9, context, "bind-attr", [], {"class": ":btn :dropdown-toggle buttonClass"});
-        element(env, element9, context, "bind-attr", [], {"id": get(env, context, "menuButtonId")});
-        element(env, element9, context, "bind-attr", [], {"disabled": get(env, context, "disabled")});
-        element(env, element9, context, "action", ["showHide"], {});
-        content(env, morph1, context, "selectionSummary");
-        element(env, element11, context, "bind-attr", [], {"class": "selectionBadge:badge:caret"});
-        content(env, morph2, context, "selectionBadge");
-        element(env, element12, context, "bind-attr", [], {"aria-labelledby": get(env, context, "menuButtonId")});
-        block(env, morph3, context, "if", [get(env, context, "liveSearch")], {}, child0, null);
-        block(env, morph4, context, "if", [get(env, context, "multiple")], {}, child1, null);
-        block(env, morph5, context, "each", [get(env, context, "groupedContentList")], {}, child2, null);
-        return fragment;
-      }
+        return morphs;
+      },
+      statements: [
+        ["block","if",[["get","nativeMobile",["loc",[null,[1,6],[1,18]]]]],[],0,null,["loc",[null,[1,0],[6,7]]]],
+        ["attribute","class",["concat",["bs-select dropdown ",["subexpr","if",[["get","nativeMobile",["loc",[null,[8,36],[8,48]]]],"hidden-xs"],[],["loc",[null,[8,31],[8,62]]]]," ",["subexpr","if",[["get","disabled",["loc",[null,[8,68],[8,76]]]],"disabled"],[],["loc",[null,[8,63],[8,89]]]]," ",["subexpr","if",[["get","showDropdown",["loc",[null,[8,95],[8,107]]]],"open"],[],["loc",[null,[8,90],[8,116]]]]]]],
+        ["attribute","class",["concat",["btn dropdown-toggle ",["get","buttonClass",["loc",[null,[11,39],[11,50]]]]]]],
+        ["attribute","id",["get","menuButtonId",["loc",[null,[12,15],[12,27]]]]],
+        ["attribute","disabled",["get","disabled",["loc",[null,[13,21],[13,29]]]]],
+        ["element","action",["showHide"],[],["loc",[null,[10,10],[10,31]]]],
+        ["content","selectionSummary",["loc",[null,[16,6],[16,26]]]],
+        ["attribute","class",["subexpr","if",[["get","selectionBadge",["loc",[null,[17,23],[17,37]]]],"badge","caret"],[],["loc",[null,[17,18],[17,55]]]]],
+        ["content","selectionBadge",["loc",[null,[17,56],[17,74]]]],
+        ["attribute","aria-labelledby",["get","menuButtonId",["loc",[null,[20,58],[20,70]]]]],
+        ["content","yield",["loc",[null,[22,6],[22,15]]]],
+        ["block","if",[["get","liveSearch",["loc",[null,[24,10],[24,20]]]]],[],1,null,["loc",[null,[24,4],[28,11]]]],
+        ["block","if",[["get","multiple",["loc",[null,[29,10],[29,18]]]]],[],2,null,["loc",[null,[29,4],[43,11]]]],
+        ["block","each",[["get","nestedGroupContentList",["loc",[null,[44,12],[44,34]]]]],[],3,null,["loc",[null,[44,4],[55,13]]]]
+      ],
+      locals: [],
+      templates: [child0, child1, child2, child3]
     };
   }()));
 
@@ -2068,83 +2578,98 @@ define('test-select-picker/templates/i18n', ['exports'], function (exports) {
   exports['default'] = Ember.HTMLBars.template((function() {
     var child0 = (function() {
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 0,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 16,
+              "column": 0
+            },
+            "end": {
+              "line": 30,
+              "column": 0
+            }
+          },
+          "moduleName": "test-select-picker/templates/i18n.hbs"
+        },
+        arity: 0,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleValue\n                multiple=true\n\n                titleTranslation=\"tranlation.key.title\"\n                selectAllTranslation=\"tranlation.key.select_all\"\n                selectNoneTranslation=\"tranlation.key.select_none\"\n                nothingSelectedMessageTranslation=\"tranlation.key.prompt\"\n\n                summaryMessageKey=\"i18n.tranlation.key.summary\"\n\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement) {
-          var dom = env.dom;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
-            }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
-            }
-          } else {
-            fragment = this.build(dom);
-          }
-          return fragment;
-        }
+        buildRenderNodes: function buildRenderNodes() { return []; },
+        statements: [
+
+        ],
+        locals: [],
+        templates: []
       };
     }());
     var child1 = (function() {
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 0,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 39,
+              "column": 0
+            },
+            "end": {
+              "line": 54,
+              "column": 0
+            }
+          },
+          "moduleName": "test-select-picker/templates/i18n.hbs"
+        },
+        arity: 0,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{\n  \"translation\": {\n    \"key: {\n      \"title\": \"translated title used for accessibility\",\n      \"prompt\": \"translated prompt\",\n      \"select_all\": \"Select All\",\n      \"select_none\": \"Select None\",\n      \"summary\": {\n        \"one\": \"You selected {{item}}\",\n        \"other\": \"You selected {{count}} items: {{list}}\"\n      }\n    }\n  }\n}\n");
+          var el1 = dom.createTextNode("{\n  \"translation\": {\n    \"key: {\n      \"title\": \"translated title used for accessibility\",\n      \"prompt\": \"translated prompt\",\n      \"select_all\": \"Select All\",\n      \"select_none\": \"Select None\",\n      \"summary\": {\n        \"one\": \"You selected ");
+          dom.appendChild(el0, el1);
+          var el1 = dom.createTextNode("{{item}}\",\n        \"other\": \"You selected ");
+          dom.appendChild(el0, el1);
+          var el1 = dom.createTextNode("{{count}} items: ");
+          dom.appendChild(el0, el1);
+          var el1 = dom.createTextNode("{{list}}\"\n      }\n    }\n  }\n}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement) {
-          var dom = env.dom;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
-            }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
-            }
-          } else {
-            fragment = this.build(dom);
-          }
-          return fragment;
-        }
+        buildRenderNodes: function buildRenderNodes() { return []; },
+        statements: [
+
+        ],
+        locals: [],
+        templates: []
       };
     }());
     return {
-      isHTMLBars: true,
-      revision: "Ember@1.11.1",
-      blockParams: 0,
+      meta: {
+        "revision": "Ember@1.13.8",
+        "loc": {
+          "source": null,
+          "start": {
+            "line": 1,
+            "column": 0
+          },
+          "end": {
+            "line": 74,
+            "column": 0
+          }
+        },
+        "moduleName": "test-select-picker/templates/i18n.hbs"
+      },
+      arity: 0,
       cachedFragment: null,
       hasRendered: false,
-      build: function build(dom) {
+      buildFragment: function buildFragment(dom) {
         var el0 = dom.createDocumentFragment();
         var el1 = dom.createElement("div");
         dom.setAttribute(el1,"class","panel panel-default");
@@ -2369,32 +2894,18 @@ define('test-select-picker/templates/i18n', ['exports'], function (exports) {
         dom.appendChild(el0, el1);
         return el0;
       },
-      render: function render(context, env, contextualElement) {
-        var dom = env.dom;
-        var hooks = env.hooks, block = hooks.block;
-        dom.detectNamespace(contextualElement);
-        var fragment;
-        if (env.useFragmentCache && dom.canClone) {
-          if (this.cachedFragment === null) {
-            fragment = this.build(dom);
-            if (this.hasRendered) {
-              this.cachedFragment = fragment;
-            } else {
-              this.hasRendered = true;
-            }
-          }
-          if (this.cachedFragment) {
-            fragment = dom.cloneNode(this.cachedFragment, true);
-          }
-        } else {
-          fragment = this.build(dom);
-        }
-        var morph0 = dom.createMorphAt(dom.childAt(fragment, [2, 3]),1,1);
-        var morph1 = dom.createMorphAt(dom.childAt(fragment, [4, 3]),1,1);
-        block(env, morph0, context, "highlight-code", [], {"lang": "handlebars"}, child0, null);
-        block(env, morph1, context, "highlight-code", [], {"lang": "json"}, child1, null);
-        return fragment;
-      }
+      buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+        var morphs = new Array(2);
+        morphs[0] = dom.createMorphAt(dom.childAt(fragment, [2, 3]),1,1);
+        morphs[1] = dom.createMorphAt(dom.childAt(fragment, [4, 3]),1,1);
+        return morphs;
+      },
+      statements: [
+        ["block","highlight-code",[],["lang","handlebars"],0,null,["loc",[null,[16,0],[30,19]]]],
+        ["block","highlight-code",[],["lang","json"],1,null,["loc",[null,[39,0],[54,19]]]]
+      ],
+      locals: [],
+      templates: [child0, child1]
     };
   }()));
 
@@ -2406,119 +2917,126 @@ define('test-select-picker/templates/index', ['exports'], function (exports) {
   exports['default'] = Ember.HTMLBars.template((function() {
     var child0 = (function() {
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 0,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 14,
+              "column": 0
+            },
+            "end": {
+              "line": 19,
+              "column": 0
+            }
+          },
+          "moduleName": "test-select-picker/templates/index.hbs"
+        },
+        arity: 0,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode("{{select-picker content=singleContent\n                value=singleValue\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement) {
-          var dom = env.dom;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
-            }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
-            }
-          } else {
-            fragment = this.build(dom);
-          }
-          return fragment;
-        }
+        buildRenderNodes: function buildRenderNodes() { return []; },
+        statements: [
+
+        ],
+        locals: [],
+        templates: []
       };
     }());
     var child1 = (function() {
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 0,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 40,
+              "column": 0
+            },
+            "end": {
+              "line": 47,
+              "column": 0
+            }
+          },
+          "moduleName": "test-select-picker/templates/index.hbs"
+        },
+        arity: 0,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleValue\n                multiple=true\n                optionGroupPath=\"group\"\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement) {
-          var dom = env.dom;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
-            }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
-            }
-          } else {
-            fragment = this.build(dom);
-          }
-          return fragment;
-        }
+        buildRenderNodes: function buildRenderNodes() { return []; },
+        statements: [
+
+        ],
+        locals: [],
+        templates: []
       };
     }());
     var child2 = (function() {
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 0,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 69,
+              "column": 0
+            },
+            "end": {
+              "line": 76,
+              "column": 0
+            }
+          },
+          "moduleName": "test-select-picker/templates/index.hbs"
+        },
+        arity: 0,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode("{{list-picker content=listContent\n              selection=listValue\n              multiple=\"true\"\n              optionGroupPath=\"group\"\n              optionLabelPath=\"content.label\"\n              optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement) {
-          var dom = env.dom;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
-            }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
-            }
-          } else {
-            fragment = this.build(dom);
-          }
-          return fragment;
-        }
+        buildRenderNodes: function buildRenderNodes() { return []; },
+        statements: [
+
+        ],
+        locals: [],
+        templates: []
       };
     }());
     return {
-      isHTMLBars: true,
-      revision: "Ember@1.11.1",
-      blockParams: 0,
+      meta: {
+        "revision": "Ember@1.13.8",
+        "loc": {
+          "source": null,
+          "start": {
+            "line": 1,
+            "column": 0
+          },
+          "end": {
+            "line": 81,
+            "column": 0
+          }
+        },
+        "moduleName": "test-select-picker/templates/index.hbs"
+      },
+      arity: 0,
       cachedFragment: null,
       hasRendered: false,
-      build: function build(dom) {
+      buildFragment: function buildFragment(dom) {
         var el0 = dom.createDocumentFragment();
         var el1 = dom.createElement("div");
         dom.setAttribute(el1,"class","panel panel-default");
@@ -2693,43 +3211,29 @@ define('test-select-picker/templates/index', ['exports'], function (exports) {
         dom.appendChild(el0, el1);
         return el0;
       },
-      render: function render(context, env, contextualElement) {
-        var dom = env.dom;
-        var hooks = env.hooks, get = hooks.get, inline = hooks.inline, block = hooks.block;
-        dom.detectNamespace(contextualElement);
-        var fragment;
-        if (env.useFragmentCache && dom.canClone) {
-          if (this.cachedFragment === null) {
-            fragment = this.build(dom);
-            if (this.hasRendered) {
-              this.cachedFragment = fragment;
-            } else {
-              this.hasRendered = true;
-            }
-          }
-          if (this.cachedFragment) {
-            fragment = dom.cloneNode(this.cachedFragment, true);
-          }
-        } else {
-          fragment = this.build(dom);
-        }
+      buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
         var element0 = dom.childAt(fragment, [0, 3, 1]);
         var element1 = dom.childAt(fragment, [2, 3, 1]);
         var element2 = dom.childAt(fragment, [4, 3, 1]);
-        var morph0 = dom.createMorphAt(dom.childAt(element0, [1]),1,1);
-        var morph1 = dom.createMorphAt(dom.childAt(element0, [3]),1,1);
-        var morph2 = dom.createMorphAt(dom.childAt(element1, [1]),1,1);
-        var morph3 = dom.createMorphAt(dom.childAt(element1, [3]),1,1);
-        var morph4 = dom.createMorphAt(dom.childAt(element2, [1]),1,1);
-        var morph5 = dom.createMorphAt(dom.childAt(element2, [3]),1,1);
-        inline(env, morph0, context, "select-picker", [], {"content": get(env, context, "singleContent"), "value": get(env, context, "singleValue"), "optionLabelPath": "content.label", "optionValuePath": "content.value"});
-        block(env, morph1, context, "highlight-code", [], {"lang": "handlebars"}, child0, null);
-        inline(env, morph2, context, "select-picker", [], {"content": get(env, context, "multipleContent"), "selection": get(env, context, "multipleValue"), "multiple": true, "optionGroupPath": "group", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
-        block(env, morph3, context, "highlight-code", [], {"lang": "handlebars"}, child1, null);
-        inline(env, morph4, context, "list-picker", [], {"content": get(env, context, "listContent"), "selection": get(env, context, "listValue"), "multiple": "true", "optionGroupPath": "group", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
-        block(env, morph5, context, "highlight-code", [], {"lang": "handlebars"}, child2, null);
-        return fragment;
-      }
+        var morphs = new Array(6);
+        morphs[0] = dom.createMorphAt(dom.childAt(element0, [1]),1,1);
+        morphs[1] = dom.createMorphAt(dom.childAt(element0, [3]),1,1);
+        morphs[2] = dom.createMorphAt(dom.childAt(element1, [1]),1,1);
+        morphs[3] = dom.createMorphAt(dom.childAt(element1, [3]),1,1);
+        morphs[4] = dom.createMorphAt(dom.childAt(element2, [1]),1,1);
+        morphs[5] = dom.createMorphAt(dom.childAt(element2, [3]),1,1);
+        return morphs;
+      },
+      statements: [
+        ["inline","select-picker",[],["content",["subexpr","@mut",[["get","singleContent",["loc",[null,[8,32],[8,45]]]]],[],[]],"value",["subexpr","@mut",[["get","singleValue",["loc",[null,[9,30],[9,41]]]]],[],[]],"optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[8,8],[11,57]]]],
+        ["block","highlight-code",[],["lang","handlebars"],0,null,["loc",[null,[14,0],[19,19]]]],
+        ["inline","select-picker",[],["content",["subexpr","@mut",[["get","multipleContent",["loc",[null,[32,32],[32,47]]]]],[],[]],"selection",["subexpr","@mut",[["get","multipleValue",["loc",[null,[33,34],[33,47]]]]],[],[]],"multiple",true,"optionGroupPath","group","optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[32,8],[37,57]]]],
+        ["block","highlight-code",[],["lang","handlebars"],1,null,["loc",[null,[40,0],[47,19]]]],
+        ["inline","list-picker",[],["content",["subexpr","@mut",[["get","listContent",["loc",[null,[61,30],[61,41]]]]],[],[]],"selection",["subexpr","@mut",[["get","listValue",["loc",[null,[62,32],[62,41]]]]],[],[]],"multiple","true","optionGroupPath","group","optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[61,8],[66,55]]]],
+        ["block","highlight-code",[],["lang","handlebars"],2,null,["loc",[null,[69,0],[76,19]]]]
+      ],
+      locals: [],
+      templates: [child0, child1, child2]
     };
   }()));
 
@@ -2740,12 +3244,25 @@ define('test-select-picker/templates/install', ['exports'], function (exports) {
 
   exports['default'] = Ember.HTMLBars.template((function() {
     return {
-      isHTMLBars: true,
-      revision: "Ember@1.11.1",
-      blockParams: 0,
+      meta: {
+        "revision": "Ember@1.13.8",
+        "loc": {
+          "source": null,
+          "start": {
+            "line": 1,
+            "column": 0
+          },
+          "end": {
+            "line": 24,
+            "column": 0
+          }
+        },
+        "moduleName": "test-select-picker/templates/install.hbs"
+      },
+      arity: 0,
       cachedFragment: null,
       hasRendered: false,
-      build: function build(dom) {
+      buildFragment: function buildFragment(dom) {
         var el0 = dom.createDocumentFragment();
         var el1 = dom.createElement("div");
         dom.setAttribute(el1,"class","panel panel-default");
@@ -2857,27 +3374,12 @@ define('test-select-picker/templates/install', ['exports'], function (exports) {
         dom.appendChild(el0, el1);
         return el0;
       },
-      render: function render(context, env, contextualElement) {
-        var dom = env.dom;
-        dom.detectNamespace(contextualElement);
-        var fragment;
-        if (env.useFragmentCache && dom.canClone) {
-          if (this.cachedFragment === null) {
-            fragment = this.build(dom);
-            if (this.hasRendered) {
-              this.cachedFragment = fragment;
-            } else {
-              this.hasRendered = true;
-            }
-          }
-          if (this.cachedFragment) {
-            fragment = dom.cloneNode(this.cachedFragment, true);
-          }
-        } else {
-          fragment = this.build(dom);
-        }
-        return fragment;
-      }
+      buildRenderNodes: function buildRenderNodes() { return []; },
+      statements: [
+
+      ],
+      locals: [],
+      templates: []
     };
   }()));
 
@@ -2889,83 +3391,92 @@ define('test-select-picker/templates/keyboard', ['exports'], function (exports) 
   exports['default'] = Ember.HTMLBars.template((function() {
     var child0 = (function() {
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 0,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 50,
+              "column": 0
+            },
+            "end": {
+              "line": 55,
+              "column": 0
+            }
+          },
+          "moduleName": "test-select-picker/templates/keyboard.hbs"
+        },
+        arity: 0,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode("{{keyboard-select-picker content=singleContent\n                         value=singleValue\n                         optionLabelPath=\"content.label\"\n                         optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement) {
-          var dom = env.dom;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
-            }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
-            }
-          } else {
-            fragment = this.build(dom);
-          }
-          return fragment;
-        }
+        buildRenderNodes: function buildRenderNodes() { return []; },
+        statements: [
+
+        ],
+        locals: [],
+        templates: []
       };
     }());
     var child1 = (function() {
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 0,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 76,
+              "column": 0
+            },
+            "end": {
+              "line": 83,
+              "column": 0
+            }
+          },
+          "moduleName": "test-select-picker/templates/keyboard.hbs"
+        },
+        arity: 0,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode("{{keyboard-select-picker content=multipleContent\n                         selection=multipleValue\n                         multiple=true\n                         optionGroupPath=\"group\"\n                         optionLabelPath=\"content.label\"\n                         optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement) {
-          var dom = env.dom;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
-            }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
-            }
-          } else {
-            fragment = this.build(dom);
-          }
-          return fragment;
-        }
+        buildRenderNodes: function buildRenderNodes() { return []; },
+        statements: [
+
+        ],
+        locals: [],
+        templates: []
       };
     }());
     return {
-      isHTMLBars: true,
-      revision: "Ember@1.11.1",
-      blockParams: 0,
+      meta: {
+        "revision": "Ember@1.13.8",
+        "loc": {
+          "source": null,
+          "start": {
+            "line": 1,
+            "column": 0
+          },
+          "end": {
+            "line": 88,
+            "column": 0
+          }
+        },
+        "moduleName": "test-select-picker/templates/keyboard.hbs"
+      },
+      arity: 0,
       cachedFragment: null,
       hasRendered: false,
-      build: function build(dom) {
+      buildFragment: function buildFragment(dom) {
         var el0 = dom.createDocumentFragment();
         var el1 = dom.createElement("div");
         dom.setAttribute(el1,"class","panel panel-default");
@@ -3279,38 +3790,24 @@ define('test-select-picker/templates/keyboard', ['exports'], function (exports) 
         dom.appendChild(el0, el1);
         return el0;
       },
-      render: function render(context, env, contextualElement) {
-        var dom = env.dom;
-        var hooks = env.hooks, get = hooks.get, inline = hooks.inline, block = hooks.block;
-        dom.detectNamespace(contextualElement);
-        var fragment;
-        if (env.useFragmentCache && dom.canClone) {
-          if (this.cachedFragment === null) {
-            fragment = this.build(dom);
-            if (this.hasRendered) {
-              this.cachedFragment = fragment;
-            } else {
-              this.hasRendered = true;
-            }
-          }
-          if (this.cachedFragment) {
-            fragment = dom.cloneNode(this.cachedFragment, true);
-          }
-        } else {
-          fragment = this.build(dom);
-        }
+      buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
         var element0 = dom.childAt(fragment, [2, 3, 1]);
         var element1 = dom.childAt(fragment, [4, 3, 1]);
-        var morph0 = dom.createMorphAt(dom.childAt(element0, [1]),1,1);
-        var morph1 = dom.createMorphAt(dom.childAt(element0, [3]),1,1);
-        var morph2 = dom.createMorphAt(dom.childAt(element1, [1]),1,1);
-        var morph3 = dom.createMorphAt(dom.childAt(element1, [3]),1,1);
-        inline(env, morph0, context, "keyboard-select-picker", [], {"content": get(env, context, "singleContent"), "value": get(env, context, "singleValue"), "optionLabelPath": "content.label", "optionValuePath": "content.value"});
-        block(env, morph1, context, "highlight-code", [], {"lang": "handlebars"}, child0, null);
-        inline(env, morph2, context, "keyboard-select-picker", [], {"content": get(env, context, "multipleContent"), "selection": get(env, context, "multipleValue"), "multiple": true, "optionGroupPath": "group", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
-        block(env, morph3, context, "highlight-code", [], {"lang": "handlebars"}, child1, null);
-        return fragment;
-      }
+        var morphs = new Array(4);
+        morphs[0] = dom.createMorphAt(dom.childAt(element0, [1]),1,1);
+        morphs[1] = dom.createMorphAt(dom.childAt(element0, [3]),1,1);
+        morphs[2] = dom.createMorphAt(dom.childAt(element1, [1]),1,1);
+        morphs[3] = dom.createMorphAt(dom.childAt(element1, [3]),1,1);
+        return morphs;
+      },
+      statements: [
+        ["inline","keyboard-select-picker",[],["content",["subexpr","@mut",[["get","singleContent",["loc",[null,[44,41],[44,54]]]]],[],[]],"value",["subexpr","@mut",[["get","singleValue",["loc",[null,[45,39],[45,50]]]]],[],[]],"optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[44,8],[47,66]]]],
+        ["block","highlight-code",[],["lang","handlebars"],0,null,["loc",[null,[50,0],[55,19]]]],
+        ["inline","keyboard-select-picker",[],["content",["subexpr","@mut",[["get","multipleContent",["loc",[null,[68,41],[68,56]]]]],[],[]],"selection",["subexpr","@mut",[["get","multipleValue",["loc",[null,[69,43],[69,56]]]]],[],[]],"multiple",true,"optionGroupPath","group","optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[68,8],[73,66]]]],
+        ["block","highlight-code",[],["lang","handlebars"],1,null,["loc",[null,[76,0],[83,19]]]]
+      ],
+      locals: [],
+      templates: [child0, child1]
     };
   }()));
 
@@ -3322,83 +3819,183 @@ define('test-select-picker/templates/options', ['exports'], function (exports) {
   exports['default'] = Ember.HTMLBars.template((function() {
     var child0 = (function() {
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 0,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 17,
+              "column": 0
+            },
+            "end": {
+              "line": 25,
+              "column": 0
+            }
+          },
+          "moduleName": "test-select-picker/templates/options.hbs"
+        },
+        arity: 0,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleValue\n                multiple=true\n                showBadge=true\n                summaryMessage=\"Multiple items selected\"\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement) {
-          var dom = env.dom;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
-            }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
-            }
-          } else {
-            fragment = this.build(dom);
-          }
-          return fragment;
-        }
+        buildRenderNodes: function buildRenderNodes() { return []; },
+        statements: [
+
+        ],
+        locals: [],
+        templates: []
       };
     }());
     var child1 = (function() {
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 0,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 47,
+              "column": 0
+            },
+            "end": {
+              "line": 54,
+              "column": 0
+            }
+          },
+          "moduleName": "test-select-picker/templates/options.hbs"
+        },
+        arity: 0,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleValue\n                multiple=true\n                nativeMobile=false\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement) {
-          var dom = env.dom;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
+        buildRenderNodes: function buildRenderNodes() { return []; },
+        statements: [
+
+        ],
+        locals: [],
+        templates: []
+      };
+    }());
+    var child2 = (function() {
+      return {
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 68,
+              "column": 8
+            },
+            "end": {
+              "line": 77,
+              "column": 8
             }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
+          },
+          "moduleName": "test-select-picker/templates/options.hbs"
+        },
+        arity: 0,
+        cachedFragment: null,
+        hasRendered: false,
+        buildFragment: function buildFragment(dom) {
+          var el0 = dom.createDocumentFragment();
+          var el1 = dom.createTextNode("          ");
+          dom.appendChild(el0, el1);
+          var el1 = dom.createElement("div");
+          dom.setAttribute(el1,"class","alert alert-info clearfix");
+          var el2 = dom.createTextNode("\n            Hello! Try this: ");
+          dom.appendChild(el1, el2);
+          var el2 = dom.createElement("button");
+          dom.setAttribute(el2,"class","btn btn-sm btn-primary");
+          var el3 = dom.createTextNode("button");
+          dom.appendChild(el2, el3);
+          dom.appendChild(el1, el2);
+          var el2 = dom.createTextNode("\n          ");
+          dom.appendChild(el1, el2);
+          dom.appendChild(el0, el1);
+          var el1 = dom.createTextNode("\n");
+          dom.appendChild(el0, el1);
+          return el0;
+        },
+        buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+          var element0 = dom.childAt(fragment, [1, 1]);
+          var morphs = new Array(1);
+          morphs[0] = dom.createElementMorph(element0);
+          return morphs;
+        },
+        statements: [
+          ["element","action",["sayHello"],[],["loc",[null,[75,68],[75,89]]]]
+        ],
+        locals: [],
+        templates: []
+      };
+    }());
+    var child3 = (function() {
+      return {
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 80,
+              "column": 0
+            },
+            "end": {
+              "line": 91,
+              "column": 0
             }
-          } else {
-            fragment = this.build(dom);
-          }
-          return fragment;
-        }
+          },
+          "moduleName": "test-select-picker/templates/options.hbs"
+        },
+        arity: 0,
+        cachedFragment: null,
+        hasRendered: false,
+        buildFragment: function buildFragment(dom) {
+          var el0 = dom.createDocumentFragment();
+          var el1 = dom.createTextNode("{{#select-picker content=multipleContent\n                 selection=multipleValue\n                 multiple=true\n                 summaryMessage=\"Example content inside\"\n                 optionLabelPath=\"content.label\"\n                 optionValuePath=\"content.value\"}}\n  <div class=\"alert alert-info\">\n    Hello! Try this <button ");
+          dom.appendChild(el0, el1);
+          var el1 = dom.createTextNode("{{action \"sayHello\"}}>button</button>\n  </div>\n");
+          dom.appendChild(el0, el1);
+          var el1 = dom.createTextNode("{{/select-picker}}\n");
+          dom.appendChild(el0, el1);
+          return el0;
+        },
+        buildRenderNodes: function buildRenderNodes() { return []; },
+        statements: [
+
+        ],
+        locals: [],
+        templates: []
       };
     }());
     return {
-      isHTMLBars: true,
-      revision: "Ember@1.11.1",
-      blockParams: 0,
+      meta: {
+        "revision": "Ember@1.13.8",
+        "loc": {
+          "source": null,
+          "start": {
+            "line": 1,
+            "column": 0
+          },
+          "end": {
+            "line": 96,
+            "column": 0
+          }
+        },
+        "moduleName": "test-select-picker/templates/options.hbs"
+      },
+      arity: 0,
       cachedFragment: null,
       hasRendered: false,
-      build: function build(dom) {
+      buildFragment: function buildFragment(dom) {
         var el0 = dom.createDocumentFragment();
         var el1 = dom.createElement("div");
         dom.setAttribute(el1,"class","panel panel-default");
@@ -3530,42 +4127,96 @@ define('test-select-picker/templates/options', ['exports'], function (exports) {
         var el2 = dom.createTextNode("\n");
         dom.appendChild(el1, el2);
         dom.appendChild(el0, el1);
+        var el1 = dom.createTextNode("\n\n");
+        dom.appendChild(el0, el1);
+        var el1 = dom.createElement("div");
+        dom.setAttribute(el1,"class","panel panel-default");
+        var el2 = dom.createTextNode("\n  ");
+        dom.appendChild(el1, el2);
+        var el2 = dom.createElement("div");
+        dom.setAttribute(el2,"class","panel-heading");
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("h3");
+        dom.setAttribute(el3,"class","panel-title");
+        var el4 = dom.createTextNode("Custom content");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
+        var el3 = dom.createTextNode("\n  ");
+        dom.appendChild(el2, el3);
+        dom.appendChild(el1, el2);
+        var el2 = dom.createTextNode("\n  ");
+        dom.appendChild(el1, el2);
+        var el2 = dom.createElement("div");
+        dom.setAttribute(el2,"class","panel-body");
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("p");
+        var el4 = dom.createTextNode("You can add your own custom content to the top of the drop down by using Ember's block syntax.");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("div");
+        dom.setAttribute(el3,"class","row");
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("div");
+        dom.setAttribute(el4,"class","col-sm-4");
+        var el5 = dom.createTextNode("\n");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createComment("");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("      ");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("div");
+        dom.setAttribute(el4,"class","col-sm-8");
+        var el5 = dom.createTextNode("\n");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createComment("");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("      ");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n    ");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
+        var el3 = dom.createTextNode("\n  ");
+        dom.appendChild(el2, el3);
+        dom.appendChild(el1, el2);
+        var el2 = dom.createTextNode("\n");
+        dom.appendChild(el1, el2);
+        dom.appendChild(el0, el1);
         var el1 = dom.createTextNode("\n");
         dom.appendChild(el0, el1);
         return el0;
       },
-      render: function render(context, env, contextualElement) {
-        var dom = env.dom;
-        var hooks = env.hooks, get = hooks.get, inline = hooks.inline, block = hooks.block;
-        dom.detectNamespace(contextualElement);
-        var fragment;
-        if (env.useFragmentCache && dom.canClone) {
-          if (this.cachedFragment === null) {
-            fragment = this.build(dom);
-            if (this.hasRendered) {
-              this.cachedFragment = fragment;
-            } else {
-              this.hasRendered = true;
-            }
-          }
-          if (this.cachedFragment) {
-            fragment = dom.cloneNode(this.cachedFragment, true);
-          }
-        } else {
-          fragment = this.build(dom);
-        }
-        var element0 = dom.childAt(fragment, [0, 3, 1]);
-        var element1 = dom.childAt(fragment, [2, 3, 3]);
-        var morph0 = dom.createMorphAt(dom.childAt(element0, [1]),1,1);
-        var morph1 = dom.createMorphAt(dom.childAt(element0, [3]),1,1);
-        var morph2 = dom.createMorphAt(dom.childAt(element1, [1]),1,1);
-        var morph3 = dom.createMorphAt(dom.childAt(element1, [3]),1,1);
-        inline(env, morph0, context, "select-picker", [], {"content": get(env, context, "multipleContent"), "selection": get(env, context, "multipleValue"), "multiple": true, "showBadge": true, "summaryMessage": "Multiple items selected", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
-        block(env, morph1, context, "highlight-code", [], {"lang": "handlebars"}, child0, null);
-        inline(env, morph2, context, "select-picker", [], {"content": get(env, context, "multipleContent"), "selection": get(env, context, "multipleValue"), "multiple": true, "nativeMobile": false, "optionLabelPath": "content.label", "optionValuePath": "content.value"});
-        block(env, morph3, context, "highlight-code", [], {"lang": "handlebars"}, child1, null);
-        return fragment;
-      }
+      buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
+        var element1 = dom.childAt(fragment, [0, 3, 1]);
+        var element2 = dom.childAt(fragment, [2, 3, 3]);
+        var element3 = dom.childAt(fragment, [4, 3, 3]);
+        var morphs = new Array(6);
+        morphs[0] = dom.createMorphAt(dom.childAt(element1, [1]),1,1);
+        morphs[1] = dom.createMorphAt(dom.childAt(element1, [3]),1,1);
+        morphs[2] = dom.createMorphAt(dom.childAt(element2, [1]),1,1);
+        morphs[3] = dom.createMorphAt(dom.childAt(element2, [3]),1,1);
+        morphs[4] = dom.createMorphAt(dom.childAt(element3, [1]),1,1);
+        morphs[5] = dom.createMorphAt(dom.childAt(element3, [3]),1,1);
+        return morphs;
+      },
+      statements: [
+        ["inline","select-picker",[],["content",["subexpr","@mut",[["get","multipleContent",["loc",[null,[8,32],[8,47]]]]],[],[]],"selection",["subexpr","@mut",[["get","multipleValue",["loc",[null,[9,34],[9,47]]]]],[],[]],"multiple",true,"showBadge",true,"summaryMessage","Multiple items selected","optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[8,8],[14,57]]]],
+        ["block","highlight-code",[],["lang","handlebars"],0,null,["loc",[null,[17,0],[25,19]]]],
+        ["inline","select-picker",[],["content",["subexpr","@mut",[["get","multipleContent",["loc",[null,[39,32],[39,47]]]]],[],[]],"selection",["subexpr","@mut",[["get","multipleValue",["loc",[null,[40,34],[40,47]]]]],[],[]],"multiple",true,"nativeMobile",false,"optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[39,8],[44,57]]]],
+        ["block","highlight-code",[],["lang","handlebars"],1,null,["loc",[null,[47,0],[54,19]]]],
+        ["block","select-picker",[],["content",["subexpr","@mut",[["get","multipleContent",["loc",[null,[68,33],[68,48]]]]],[],[]],"selection",["subexpr","@mut",[["get","multipleValue",["loc",[null,[69,35],[69,48]]]]],[],[]],"multiple",true,"summaryMessage","Example content inside","optionLabelPath","content.label","optionValuePath","content.value"],2,null,["loc",[null,[68,8],[77,26]]]],
+        ["block","highlight-code",[],["lang","handlebars"],3,null,["loc",[null,[80,0],[91,19]]]]
+      ],
+      locals: [],
+      templates: [child0, child1, child2, child3]
     };
   }()));
 
@@ -3577,119 +4228,126 @@ define('test-select-picker/templates/searching', ['exports'], function (exports)
   exports['default'] = Ember.HTMLBars.template((function() {
     var child0 = (function() {
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 0,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 17,
+              "column": 0
+            },
+            "end": {
+              "line": 25,
+              "column": 0
+            }
+          },
+          "moduleName": "test-select-picker/templates/searching.hbs"
+        },
+        arity: 0,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode("{{select-picker content=simpleSearchContent\n                selection=simpleSearchValue\n                multiple=true\n                liveSearch=true\n                optionGroupPath=\"group\"\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement) {
-          var dom = env.dom;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
-            }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
-            }
-          } else {
-            fragment = this.build(dom);
-          }
-          return fragment;
-        }
+        buildRenderNodes: function buildRenderNodes() { return []; },
+        statements: [
+
+        ],
+        locals: [],
+        templates: []
       };
     }());
     var child1 = (function() {
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 0,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 47,
+              "column": 0
+            },
+            "end": {
+              "line": 55,
+              "column": 0
+            }
+          },
+          "moduleName": "test-select-picker/templates/searching.hbs"
+        },
+        arity: 0,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode("{{select-picker content=advancedSearchContent\n                selection=advancedSearchValue\n                multiple=true\n                liveSearch=\"advanced\"\n                optionGroupPath=\"group\"\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement) {
-          var dom = env.dom;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
-            }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
-            }
-          } else {
-            fragment = this.build(dom);
-          }
-          return fragment;
-        }
+        buildRenderNodes: function buildRenderNodes() { return []; },
+        statements: [
+
+        ],
+        locals: [],
+        templates: []
       };
     }());
     var child2 = (function() {
       return {
-        isHTMLBars: true,
-        revision: "Ember@1.11.1",
-        blockParams: 0,
+        meta: {
+          "revision": "Ember@1.13.8",
+          "loc": {
+            "source": null,
+            "start": {
+              "line": 77,
+              "column": 0
+            },
+            "end": {
+              "line": 85,
+              "column": 0
+            }
+          },
+          "moduleName": "test-select-picker/templates/searching.hbs"
+        },
+        arity: 0,
         cachedFragment: null,
         hasRendered: false,
-        build: function build(dom) {
+        buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode("{{list-picker content=advancedSearchContent\n              selection=listSearchValue\n              multiple=true\n              liveSearch=\"advanced\"\n              optionGroupPath=\"group\"\n              optionLabelPath=\"content.label\"\n              optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
-        render: function render(context, env, contextualElement) {
-          var dom = env.dom;
-          dom.detectNamespace(contextualElement);
-          var fragment;
-          if (env.useFragmentCache && dom.canClone) {
-            if (this.cachedFragment === null) {
-              fragment = this.build(dom);
-              if (this.hasRendered) {
-                this.cachedFragment = fragment;
-              } else {
-                this.hasRendered = true;
-              }
-            }
-            if (this.cachedFragment) {
-              fragment = dom.cloneNode(this.cachedFragment, true);
-            }
-          } else {
-            fragment = this.build(dom);
-          }
-          return fragment;
-        }
+        buildRenderNodes: function buildRenderNodes() { return []; },
+        statements: [
+
+        ],
+        locals: [],
+        templates: []
       };
     }());
     return {
-      isHTMLBars: true,
-      revision: "Ember@1.11.1",
-      blockParams: 0,
+      meta: {
+        "revision": "Ember@1.13.8",
+        "loc": {
+          "source": null,
+          "start": {
+            "line": 1,
+            "column": 0
+          },
+          "end": {
+            "line": 90,
+            "column": 0
+          }
+        },
+        "moduleName": "test-select-picker/templates/searching.hbs"
+      },
+      arity: 0,
       cachedFragment: null,
       hasRendered: false,
-      build: function build(dom) {
+      buildFragment: function buildFragment(dom) {
         var el0 = dom.createDocumentFragment();
         var el1 = dom.createElement("div");
         dom.setAttribute(el1,"class","panel panel-default");
@@ -3864,43 +4522,29 @@ define('test-select-picker/templates/searching', ['exports'], function (exports)
         dom.appendChild(el0, el1);
         return el0;
       },
-      render: function render(context, env, contextualElement) {
-        var dom = env.dom;
-        var hooks = env.hooks, get = hooks.get, inline = hooks.inline, block = hooks.block;
-        dom.detectNamespace(contextualElement);
-        var fragment;
-        if (env.useFragmentCache && dom.canClone) {
-          if (this.cachedFragment === null) {
-            fragment = this.build(dom);
-            if (this.hasRendered) {
-              this.cachedFragment = fragment;
-            } else {
-              this.hasRendered = true;
-            }
-          }
-          if (this.cachedFragment) {
-            fragment = dom.cloneNode(this.cachedFragment, true);
-          }
-        } else {
-          fragment = this.build(dom);
-        }
+      buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
         var element0 = dom.childAt(fragment, [0, 3, 1]);
         var element1 = dom.childAt(fragment, [2, 3, 1]);
         var element2 = dom.childAt(fragment, [4, 3, 1]);
-        var morph0 = dom.createMorphAt(dom.childAt(element0, [1]),1,1);
-        var morph1 = dom.createMorphAt(dom.childAt(element0, [3]),1,1);
-        var morph2 = dom.createMorphAt(dom.childAt(element1, [1]),1,1);
-        var morph3 = dom.createMorphAt(dom.childAt(element1, [3]),1,1);
-        var morph4 = dom.createMorphAt(dom.childAt(element2, [1]),1,1);
-        var morph5 = dom.createMorphAt(dom.childAt(element2, [3]),1,1);
-        inline(env, morph0, context, "select-picker", [], {"content": get(env, context, "simpleSearchContent"), "selection": get(env, context, "simpleSearchValue"), "multiple": true, "liveSearch": true, "optionGroupPath": "group", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
-        block(env, morph1, context, "highlight-code", [], {"lang": "handlebars"}, child0, null);
-        inline(env, morph2, context, "select-picker", [], {"content": get(env, context, "advancedSearchContent"), "selection": get(env, context, "advancedSearchValue"), "multiple": true, "liveSearch": "advanced", "optionGroupPath": "group", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
-        block(env, morph3, context, "highlight-code", [], {"lang": "handlebars"}, child1, null);
-        inline(env, morph4, context, "list-picker", [], {"content": get(env, context, "listSearchContent"), "selection": get(env, context, "listSearchValue"), "multiple": true, "liveSearch": "advanced", "optionGroupPath": "group", "optionLabelPath": "content.label", "optionValuePath": "content.value"});
-        block(env, morph5, context, "highlight-code", [], {"lang": "handlebars"}, child2, null);
-        return fragment;
-      }
+        var morphs = new Array(6);
+        morphs[0] = dom.createMorphAt(dom.childAt(element0, [1]),1,1);
+        morphs[1] = dom.createMorphAt(dom.childAt(element0, [3]),1,1);
+        morphs[2] = dom.createMorphAt(dom.childAt(element1, [1]),1,1);
+        morphs[3] = dom.createMorphAt(dom.childAt(element1, [3]),1,1);
+        morphs[4] = dom.createMorphAt(dom.childAt(element2, [1]),1,1);
+        morphs[5] = dom.createMorphAt(dom.childAt(element2, [3]),1,1);
+        return morphs;
+      },
+      statements: [
+        ["inline","select-picker",[],["content",["subexpr","@mut",[["get","simpleSearchContent",["loc",[null,[8,32],[8,51]]]]],[],[]],"selection",["subexpr","@mut",[["get","simpleSearchValue",["loc",[null,[9,34],[9,51]]]]],[],[]],"multiple",true,"liveSearch",true,"optionGroupPath","group","optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[8,8],[14,57]]]],
+        ["block","highlight-code",[],["lang","handlebars"],0,null,["loc",[null,[17,0],[25,19]]]],
+        ["inline","select-picker",[],["content",["subexpr","@mut",[["get","advancedSearchContent",["loc",[null,[38,32],[38,53]]]]],[],[]],"selection",["subexpr","@mut",[["get","advancedSearchValue",["loc",[null,[39,34],[39,53]]]]],[],[]],"multiple",true,"liveSearch","advanced","optionGroupPath","group","optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[38,8],[44,57]]]],
+        ["block","highlight-code",[],["lang","handlebars"],1,null,["loc",[null,[47,0],[55,19]]]],
+        ["inline","list-picker",[],["content",["subexpr","@mut",[["get","listSearchContent",["loc",[null,[68,30],[68,47]]]]],[],[]],"selection",["subexpr","@mut",[["get","listSearchValue",["loc",[null,[69,32],[69,47]]]]],[],[]],"multiple",true,"liveSearch","advanced","optionGroupPath","group","optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[68,8],[74,55]]]],
+        ["block","highlight-code",[],["lang","handlebars"],2,null,["loc",[null,[77,0],[85,19]]]]
+      ],
+      locals: [],
+      templates: [child0, child1, child2]
     };
   }()));
 
@@ -3933,7 +4577,7 @@ catch(err) {
 if (runningTests) {
   require("test-select-picker/tests/test-helper");
 } else {
-  require("test-select-picker/app")["default"].create({"addonVersion":"1.4.2","name":"test-select-picker","version":"0.0.0.2181fc6c"});
+  require("test-select-picker/app")["default"].create({"addonVersion":"2.1.0","name":"test-select-picker","version":"0.0.0+e97c749a"});
 }
 
 /* jshint ignore:end */
