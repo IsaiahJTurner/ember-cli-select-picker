@@ -32,5 +32,11 @@ export default Ember.Controller.extend({
         return {label: street, value: street, group: neighborhood()};
       })
       .sortBy('group');
-  }.property()
+  }.property(),
+
+  actions: {
+    sayHello() {
+      alert("Hello user!");
+    }
+  }
 });
