@@ -1,10 +1,11 @@
 import Ember from 'ember';
+import ChoicesMixin from '../mixins/choices';
 
 function neighborhood() {
   return chance.pick(['East side', 'West side']);
 }
 
-var IndexController = Ember.Controller.extend({
+export default Ember.Controller.extend(ChoicesMixin, {
   singleContent: function() {
     return chance.unique(chance.street, 10)
       .map(function(street) {
@@ -28,5 +29,3 @@ var IndexController = Ember.Controller.extend({
       .sortBy('group');
   }.property()
 });
-
-export default IndexController;

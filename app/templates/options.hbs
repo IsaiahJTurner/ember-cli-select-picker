@@ -4,19 +4,26 @@
   </div>
   <div class="panel-body">
     <div class="row">
+      <div class="col-sm-12">
+        <p><strong>Results:</strong> {{multipleChoicesStr}}</p>
+      </div>
+    </div>
+    <div class="row">
       <div class="col-sm-4">
-        {{select-picker content=multipleContent
-                        selection=multipleValue
-                        multiple=true
-                        showBadge=true
-                        summaryMessage="Multiple items selected"
-                        optionLabelPath="content.label"
-                        optionValuePath="content.value"}}
+        <p>{{select-picker content=multipleContent
+                           selection=multipleChoices
+                           action=(action "setMultipleChoices")
+                           multiple=true
+                           showBadge=true
+                           summaryMessage="Multiple items selected"
+                           optionLabelPath="content.label"
+                           optionValuePath="content.value"}}</p>
       </div>
       <div class="col-sm-8">
 {{#highlight-code lang="handlebars"}}
 \{{select-picker content=multipleContent
-                selection=multipleValue
+                selection=multipleChoices
+                action=(action "setMultipleChoices")
                 multiple=true
                 showBadge=true
                 summaryMessage="Multiple items selected"
@@ -33,20 +40,27 @@
     <h3 class="panel-title">Mobile Support</h3>
   </div>
   <div class="panel-body">
-    <p>By default the native select widget is used for small screens (mobile) If you want the Bootstrap styled picker on mobile devices then you need to set <code>nativeMobile</code> to <em>false</em>.</p>
+    <div class="row">
+      <div class="col-sm-12">
+        <p>By default the native select widget is used for small screens (mobile) If you want the Bootstrap styled picker on mobile devices then you need to set <code>nativeMobile</code> to <em>false</em>.</p>
+        <p><strong>Results:</strong> {{multipleChoicesStr}}</p>
+      </div>
+    </div>
     <div class="row">
       <div class="col-sm-4">
-        {{select-picker content=multipleContent
-                        selection=multipleValue
-                        multiple=true
-                        nativeMobile=false
-                        optionLabelPath="content.label"
-                        optionValuePath="content.value"}}
+        <p>{{select-picker content=multipleContent
+                           selection=multipleChoices
+                           action=(action "setMultipleChoices")
+                           multiple=true
+                           nativeMobile=false
+                           optionLabelPath="content.label"
+                           optionValuePath="content.value"}}</p>
       </div>
       <div class="col-sm-8">
 {{#highlight-code lang="handlebars"}}
 \{{select-picker content=multipleContent
-                selection=multipleValue
+                selection=multipleChoices
+                action=(action "setMultipleChoices")
                 multiple=true
                 nativeMobile=false
                 optionLabelPath="content.label"
@@ -62,24 +76,31 @@
     <h3 class="panel-title">Custom content</h3>
   </div>
   <div class="panel-body">
-    <p>You can add your own custom content to the top of the drop down by using Ember's block syntax.</p>
+    <div class="row">
+      <div class="col-sm-12">
+        <p>You can add your own custom content to the top of the drop down by using Ember's block syntax.</p>
+        <p><strong>Results:</strong> {{multipleChoicesStr}}</p>
+      </div>
+    </div>
     <div class="row">
       <div class="col-sm-4">
-        {{#select-picker content=multipleContent
-                         selection=multipleValue
-                         multiple=true
-                         summaryMessage="Example content inside"
-                         optionLabelPath="content.label"
-                         optionValuePath="content.value"}}
+        <p>{{#select-picker content=multipleContent
+                            selection=multipleChoices
+                            action=(action "setMultipleChoices")
+                            multiple=true
+                            summaryMessage="Example content inside"
+                            optionLabelPath="content.label"
+                            optionValuePath="content.value"}}
           <div class="alert alert-info clearfix">
             Hello! Try this: <button class="btn btn-sm btn-primary" {{action "sayHello"}}>button</button>
           </div>
-        {{/select-picker}}
+        {{/select-picker}}</p>
       </div>
       <div class="col-sm-8">
 {{#highlight-code lang="handlebars"}}
 \{{#select-picker content=multipleContent
-                 selection=multipleValue
+                 selection=multipleChoices
+                 action=(action "setMultipleChoices")
                  multiple=true
                  summaryMessage="Example content inside"
                  optionLabelPath="content.label"

@@ -1,12 +1,12 @@
 import Ember from 'ember';
+import ChoicesMixin from '../mixins/choices';
 
 function neighborhood() {
   return chance.pick(['East side', 'West side']);
 }
 
-export default Ember.Controller.extend({
+export default Ember.Controller.extend(ChoicesMixin, {
   prepMultipleValue: function() {
-    console.log('hjfvhdfbej');
     var sample = this.get('multipleContent').slice(0, 4);
     this.set('multipleValue', sample);
   }.on('init'),

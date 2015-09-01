@@ -1,4 +1,5 @@
 import Ember from 'ember';
+import { choicesToString, setChoicesAction } from '../modules/choices-props';
 
 function popularity() {
   return chance.pick(['Great states', 'Awesome states']);
@@ -15,9 +16,23 @@ function stateList() {
 }
 
 var SearchingController = Ember.Controller.extend({
-  simpleSearchContent:   stateList(),
-  advancedSearchContent: stateList(),
-  listSearchContent:     stateList()
+  simpleSearchContent:      stateList(),
+  simpleSearchChoices:      [],
+  simpleSearchChoicesStr:   choicesToString('simpleSearchChoices'),
+
+  advancedSearchContent:    stateList(),
+  advancedSearchChoices:    [],
+  advancedSearchChoicesStr: choicesToString('advancedSearchChoices'),
+
+  listSearchContent:        stateList(),
+  listSearchChoices:        [],
+  listSearchChoicesStr:     choicesToString('listSearchChoices'),
+
+  actions: {
+    setSimpleSearchChoices:   setChoicesAction('simpleSearchValue'),
+    setAdvancedSearchChoices: setChoicesAction('advancedSearchValue'),
+    setListSearchChoices:     setChoicesAction('listSearchValue')
+  }
 });
 
 export default SearchingController;

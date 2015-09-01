@@ -40,16 +40,23 @@
   </div>
   <div class="panel-body">
     <div class="row">
+      <div class="col-sm-12">
+        <p><strong>Results:</strong> {{singleChoiceStr}}</p>
+      </div>
+    </div>
+    <div class="row">
       <div class="col-sm-4">
         {{keyboard-select-picker content=singleContent
-                                 value=singleValue
+                                 selection=singleChoice
+                                 action=(action "setSingleChoice")
                                  optionLabelPath="content.label"
                                  optionValuePath="content.value"}}
       </div>
       <div class="col-sm-8">
 {{#highlight-code lang="handlebars"}}
 \{{keyboard-select-picker content=singleContent
-                         value=singleValue
+                         selection=singleChoice
+                         action=(action "setSingleChoice")
                          optionLabelPath="content.label"
                          optionValuePath="content.value"}}
 {{/highlight-code}}
@@ -64,9 +71,15 @@
   </div>
   <div class="panel-body">
     <div class="row">
+      <div class="col-sm-12">
+        <p><strong>Results:</strong> {{multipleChoicesStr}}</p>
+      </div>
+    </div>
+    <div class="row">
       <div class="col-sm-4">
         {{keyboard-select-picker content=multipleContent
-                                 selection=multipleValue
+                                 selection=multipleChoices
+                                 action=(action "setMultipleChoices")
                                  multiple=true
                                  optionGroupPath="group"
                                  optionLabelPath="content.label"
@@ -75,7 +88,8 @@
       <div class="col-sm-8">
 {{#highlight-code lang="handlebars"}}
 \{{keyboard-select-picker content=multipleContent
-                         selection=multipleValue
+                         selection=multipleChoices
+                         action=(action "setMultipleChoices")
                          multiple=true
                          optionGroupPath="group"
                          optionLabelPath="content.label"
