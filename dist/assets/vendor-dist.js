@@ -91075,7 +91075,9 @@ define('ember-cli-select-picker/mixins/select-picker', ['exports', 'ember'], fun
       // selection is either an object or an array of object depending on the
       // value of the multiple property. Ember.Select maintains the value
       // property.
-      var selection = this.selectionAsArray();
+      var selection = this.selectionAsArray().map(function (item) {
+        return Ember['default'].get(item, valuePath);
+      });
       var searchMatcher = this.makeSearchMatcher();
 
       var result = _compact(Ember['default'].makeArray(this.get('content')).map(function (item) {
@@ -91088,7 +91090,7 @@ define('ember-cli-select-picker/mixins/select-picker', ['exports', 'ember'], fun
             group: group,
             label: label,
             value: value,
-            selected: _contains(selection, item)
+            selected: _contains(selection, value)
           });
         } else {
           return null;
@@ -91210,27 +91212,38 @@ define('ember-cli-select-picker/mixins/select-picker', ['exports', 'ember'], fun
       this.set('selection', selection);
     },
 
+    selectAnItem: function selectAnItem(selected) {
+      if (!this.get('disabled')) {
+        if (this.get('multiple')) {
+          this.set('keepDropdownOpen', true);
+          this.toggleSelection(selected.get('item'));
+        } else {
+          this.setProperties({
+            // TODO: value will be removed in the future
+            value: selected.get('value'),
+            selection: selected.get('item')
+          });
+        }
+      }
+    },
+
+    sendChangeAction: function sendChangeAction() {
+      var changeAction = Ember['default'].get(this, 'attrs.action');
+      if (changeAction) {
+        changeAction(this.get('selection'));
+      }
+    },
+
     actions: {
       selectItem: function selectItem(selected) {
-        if (!this.get('disabled')) {
-          if (this.get('multiple')) {
-            this.set('keepDropdownOpen', true);
-            this.toggleSelection(selected.get('item'));
-          } else {
-            this.setProperties({
-              value: selected.get('value'),
-              selection: selected.get('item')
-            });
-          }
-        }
+        this.selectAnItem(selected);
+        this.sendChangeAction();
         return false;
       },
 
       selectAllNone: function selectAllNone(listName) {
-        var _this = this;
-        this.get(listName).forEach(function (item) {
-          _this.send('selectItem', item);
-        });
+        this.get(listName).forEach(Ember['default'].run.bind(this, this.selectAnItem));
+        this.sendChangeAction();
         return false;
       },
 
@@ -91239,7 +91252,6 @@ define('ember-cli-select-picker/mixins/select-picker', ['exports', 'ember'], fun
         var contentList = this.get('contentList');
         var selectedValues = Ember['default'].makeArray(this.$('select').val());
         if (this.get('multiple')) {
-          console.dir(selectedValues);
           this.set('selection', contentList.filter(function (item) {
             return selectedValues.indexOf(item.get('value')) !== -1;
           }));
@@ -91248,6 +91260,7 @@ define('ember-cli-select-picker/mixins/select-picker', ['exports', 'ember'], fun
         } else {
           this.send('selectItem', _findBy(contentList, 'value', selectedValues[0]));
         }
+        this.sendChangeAction();
       },
 
       toggleSelectAllNone: function toggleSelectAllNone() {

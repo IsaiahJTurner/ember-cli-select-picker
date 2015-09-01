@@ -241,7 +241,7 @@ define('test-select-picker/controllers/array', ['exports', 'ember'], function (e
 	exports['default'] = Ember['default'].Controller;
 
 });
-define('test-select-picker/controllers/index', ['exports', 'ember'], function (exports, Ember) {
+define('test-select-picker/controllers/index', ['exports', 'ember', 'test-select-picker/mixins/choices'], function (exports, Ember, ChoicesMixin) {
 
   'use strict';
 
@@ -249,7 +249,7 @@ define('test-select-picker/controllers/index', ['exports', 'ember'], function (e
     return chance.pick(['East side', 'West side']);
   }
 
-  var IndexController = Ember['default'].Controller.extend({
+  exports['default'] = Ember['default'].Controller.extend(ChoicesMixin['default'], {
     singleContent: (function () {
       return chance.unique(chance.street, 10).map(function (street) {
         return { label: street, value: street };
@@ -269,10 +269,8 @@ define('test-select-picker/controllers/index', ['exports', 'ember'], function (e
     }).property()
   });
 
-  exports['default'] = IndexController;
-
 });
-define('test-select-picker/controllers/keyboard', ['exports', 'ember'], function (exports, Ember) {
+define('test-select-picker/controllers/keyboard', ['exports', 'ember', 'test-select-picker/mixins/choices'], function (exports, Ember, ChoicesMixin) {
 
   'use strict';
 
@@ -280,7 +278,7 @@ define('test-select-picker/controllers/keyboard', ['exports', 'ember'], function
     return chance.pick(['East side', 'West side']);
   }
 
-  var KeyboardController = Ember['default'].Controller.extend({
+  var KeyboardController = Ember['default'].Controller.extend(ChoicesMixin['default'], {
     singleContent: (function () {
       return chance.unique(chance.street, 10).map(function (street) {
         return { label: street, value: street };
@@ -304,7 +302,7 @@ define('test-select-picker/controllers/object', ['exports', 'ember'], function (
 	exports['default'] = Ember['default'].Controller;
 
 });
-define('test-select-picker/controllers/options', ['exports', 'ember'], function (exports, Ember) {
+define('test-select-picker/controllers/options', ['exports', 'ember', 'test-select-picker/mixins/choices'], function (exports, Ember, ChoicesMixin) {
 
   'use strict';
 
@@ -312,9 +310,8 @@ define('test-select-picker/controllers/options', ['exports', 'ember'], function 
     return chance.pick(['East side', 'West side']);
   }
 
-  exports['default'] = Ember['default'].Controller.extend({
+  exports['default'] = Ember['default'].Controller.extend(ChoicesMixin['default'], {
     prepMultipleValue: (function () {
-      console.log('hjfvhdfbej');
       var sample = this.get('multipleContent').slice(0, 4);
       this.set('multipleValue', sample);
     }).on('init'),
@@ -345,7 +342,7 @@ define('test-select-picker/controllers/options', ['exports', 'ember'], function 
   });
 
 });
-define('test-select-picker/controllers/searching', ['exports', 'ember'], function (exports, Ember) {
+define('test-select-picker/controllers/searching', ['exports', 'ember', 'test-select-picker/modules/choices-props'], function (exports, Ember, choices_props) {
 
   'use strict';
 
@@ -363,8 +360,22 @@ define('test-select-picker/controllers/searching', ['exports', 'ember'], functio
 
   var SearchingController = Ember['default'].Controller.extend({
     simpleSearchContent: stateList(),
+    simpleSearchChoices: [],
+    simpleSearchChoicesStr: choices_props.choicesToString('simpleSearchChoices'),
+
     advancedSearchContent: stateList(),
-    listSearchContent: stateList()
+    advancedSearchChoices: [],
+    advancedSearchChoicesStr: choices_props.choicesToString('advancedSearchChoices'),
+
+    listSearchContent: stateList(),
+    listSearchChoices: [],
+    listSearchChoicesStr: choices_props.choicesToString('listSearchChoices'),
+
+    actions: {
+      setSimpleSearchChoices: choices_props.setChoicesAction('simpleSearchValue'),
+      setAdvancedSearchChoices: choices_props.setChoicesAction('advancedSearchValue'),
+      setListSearchChoices: choices_props.setChoicesAction('listSearchValue')
+    }
   });
 
   exports['default'] = SearchingController;
@@ -421,6 +432,48 @@ define('test-select-picker/initializers/export-application-global', ['exports', 
 
     initialize: initialize
   };
+
+});
+define('test-select-picker/mixins/choices', ['exports', 'ember', 'test-select-picker/modules/choices-props'], function (exports, Ember, choices_props) {
+
+  'use strict';
+
+  exports['default'] = Ember['default'].Mixin.create({
+    singleChoice: [],
+    singleChoiceStr: Ember['default'].computed.readOnly('singleChoice.firstObject.value'),
+
+    multipleChoices: [],
+    multipleChoicesStr: choices_props.choicesToString('multipleChoices'),
+
+    listChoices: [],
+    listChoicesStr: choices_props.choicesToString('listChoices'),
+
+    actions: {
+      setSingleChoice: choices_props.setChoicesAction('singleChoice'),
+      setMultipleChoices: choices_props.setChoicesAction('multipleChoices'),
+      setListChoices: choices_props.setChoicesAction('listChoices')
+    }
+  });
+
+});
+define('test-select-picker/modules/choices-props', ['exports', 'ember'], function (exports, Ember) {
+
+  'use strict';
+
+  exports.setChoicesAction = setChoicesAction;
+  exports.choicesToString = choicesToString;
+
+  function setChoicesAction(prop) {
+    return function (selection) {
+      this.set(prop, Ember['default'].makeArray(selection));
+    };
+  }
+
+  function choicesToString(dependentProp) {
+    return (function () {
+      return this.get(dependentProp).mapBy('value').join(', ');
+    }).property(dependentProp + '.[].value');
+  }
 
 });
 define('test-select-picker/router', ['exports', 'ember', 'test-select-picker/config/environment'], function (exports, Ember, config) {
@@ -926,7 +979,7 @@ define('test-select-picker/templates/application', ['exports'], function (export
       buildFragment: function buildFragment(dom) {
         var el0 = dom.createDocumentFragment();
         var el1 = dom.createElement("div");
-        dom.setAttribute(el1,"class","container");
+        dom.setAttribute(el1,"class","container-fluid");
         var el2 = dom.createTextNode("\n  ");
         dom.appendChild(el1, el2);
         var el2 = dom.createElement("div");
@@ -2922,11 +2975,11 @@ define('test-select-picker/templates/index', ['exports'], function (exports) {
           "loc": {
             "source": null,
             "start": {
-              "line": 14,
+              "line": 20,
               "column": 0
             },
             "end": {
-              "line": 19,
+              "line": 26,
               "column": 0
             }
           },
@@ -2937,7 +2990,7 @@ define('test-select-picker/templates/index', ['exports'], function (exports) {
         hasRendered: false,
         buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{{select-picker content=singleContent\n                value=singleValue\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
+          var el1 = dom.createTextNode("{{select-picker content=singleContent\n                selection=singleChoice\n                action=(action \"setSingleChoice\")\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -2956,11 +3009,11 @@ define('test-select-picker/templates/index', ['exports'], function (exports) {
           "loc": {
             "source": null,
             "start": {
-              "line": 40,
+              "line": 53,
               "column": 0
             },
             "end": {
-              "line": 47,
+              "line": 61,
               "column": 0
             }
           },
@@ -2971,7 +3024,7 @@ define('test-select-picker/templates/index', ['exports'], function (exports) {
         hasRendered: false,
         buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleValue\n                multiple=true\n                optionGroupPath=\"group\"\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
+          var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleChoices\n                action=(action \"setMultipleChoices\")\n                multiple=true\n                optionGroupPath=\"group\"\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -2990,11 +3043,11 @@ define('test-select-picker/templates/index', ['exports'], function (exports) {
           "loc": {
             "source": null,
             "start": {
-              "line": 69,
+              "line": 89,
               "column": 0
             },
             "end": {
-              "line": 76,
+              "line": 97,
               "column": 0
             }
           },
@@ -3005,7 +3058,7 @@ define('test-select-picker/templates/index', ['exports'], function (exports) {
         hasRendered: false,
         buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{{list-picker content=listContent\n              selection=listValue\n              multiple=\"true\"\n              optionGroupPath=\"group\"\n              optionLabelPath=\"content.label\"\n              optionValuePath=\"content.value\"}}\n");
+          var el1 = dom.createTextNode("{{list-picker content=listContent\n              selection=listChoices\n              action=(action \"setListChoices\")\n              multiple=\"true\"\n              optionGroupPath=\"group\"\n              optionLabelPath=\"content.label\"\n              optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -3027,7 +3080,7 @@ define('test-select-picker/templates/index', ['exports'], function (exports) {
             "column": 0
           },
           "end": {
-            "line": 81,
+            "line": 102,
             "column": 0
           }
         },
@@ -3065,10 +3118,38 @@ define('test-select-picker/templates/index', ['exports'], function (exports) {
         var el4 = dom.createTextNode("\n      ");
         dom.appendChild(el3, el4);
         var el4 = dom.createElement("div");
+        dom.setAttribute(el4,"class","col-sm-12");
+        var el5 = dom.createTextNode("\n        ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("p");
+        var el6 = dom.createElement("strong");
+        var el7 = dom.createTextNode("Results:");
+        dom.appendChild(el6, el7);
+        dom.appendChild(el5, el6);
+        var el6 = dom.createTextNode(" ");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createComment("");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n      ");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n    ");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("div");
+        dom.setAttribute(el3,"class","row");
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("div");
         dom.setAttribute(el4,"class","col-sm-4");
         var el5 = dom.createTextNode("\n        ");
         dom.appendChild(el4, el5);
-        var el5 = dom.createComment("");
+        var el5 = dom.createElement("p");
+        var el6 = dom.createComment("");
+        dom.appendChild(el5, el6);
         dom.appendChild(el4, el5);
         var el5 = dom.createTextNode("\n      ");
         dom.appendChild(el4, el5);
@@ -3122,10 +3203,38 @@ define('test-select-picker/templates/index', ['exports'], function (exports) {
         var el4 = dom.createTextNode("\n      ");
         dom.appendChild(el3, el4);
         var el4 = dom.createElement("div");
+        dom.setAttribute(el4,"class","col-sm-12");
+        var el5 = dom.createTextNode("\n        ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("p");
+        var el6 = dom.createElement("strong");
+        var el7 = dom.createTextNode("Results:");
+        dom.appendChild(el6, el7);
+        dom.appendChild(el5, el6);
+        var el6 = dom.createTextNode(" ");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createComment("");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n      ");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n    ");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("div");
+        dom.setAttribute(el3,"class","row");
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("div");
         dom.setAttribute(el4,"class","col-sm-4");
         var el5 = dom.createTextNode("\n        ");
         dom.appendChild(el4, el5);
-        var el5 = dom.createComment("");
+        var el5 = dom.createElement("p");
+        var el6 = dom.createComment("");
+        dom.appendChild(el5, el6);
         dom.appendChild(el4, el5);
         var el5 = dom.createTextNode("\n      ");
         dom.appendChild(el4, el5);
@@ -3179,10 +3288,38 @@ define('test-select-picker/templates/index', ['exports'], function (exports) {
         var el4 = dom.createTextNode("\n      ");
         dom.appendChild(el3, el4);
         var el4 = dom.createElement("div");
+        dom.setAttribute(el4,"class","col-sm-12");
+        var el5 = dom.createTextNode("\n        ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("p");
+        var el6 = dom.createElement("strong");
+        var el7 = dom.createTextNode("Results:");
+        dom.appendChild(el6, el7);
+        dom.appendChild(el5, el6);
+        var el6 = dom.createTextNode(" ");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createComment("");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n      ");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n    ");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("div");
+        dom.setAttribute(el3,"class","row");
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("div");
         dom.setAttribute(el4,"class","col-sm-4");
         var el5 = dom.createTextNode("\n        ");
         dom.appendChild(el4, el5);
-        var el5 = dom.createComment("");
+        var el5 = dom.createElement("p");
+        var el6 = dom.createComment("");
+        dom.appendChild(el5, el6);
         dom.appendChild(el4, el5);
         var el5 = dom.createTextNode("\n      ");
         dom.appendChild(el4, el5);
@@ -3212,25 +3349,34 @@ define('test-select-picker/templates/index', ['exports'], function (exports) {
         return el0;
       },
       buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
-        var element0 = dom.childAt(fragment, [0, 3, 1]);
-        var element1 = dom.childAt(fragment, [2, 3, 1]);
-        var element2 = dom.childAt(fragment, [4, 3, 1]);
-        var morphs = new Array(6);
-        morphs[0] = dom.createMorphAt(dom.childAt(element0, [1]),1,1);
-        morphs[1] = dom.createMorphAt(dom.childAt(element0, [3]),1,1);
-        morphs[2] = dom.createMorphAt(dom.childAt(element1, [1]),1,1);
-        morphs[3] = dom.createMorphAt(dom.childAt(element1, [3]),1,1);
-        morphs[4] = dom.createMorphAt(dom.childAt(element2, [1]),1,1);
-        morphs[5] = dom.createMorphAt(dom.childAt(element2, [3]),1,1);
+        var element0 = dom.childAt(fragment, [0, 3]);
+        var element1 = dom.childAt(element0, [3]);
+        var element2 = dom.childAt(fragment, [2, 3]);
+        var element3 = dom.childAt(element2, [3]);
+        var element4 = dom.childAt(fragment, [4, 3]);
+        var element5 = dom.childAt(element4, [3]);
+        var morphs = new Array(9);
+        morphs[0] = dom.createMorphAt(dom.childAt(element0, [1, 1, 1]),2,2);
+        morphs[1] = dom.createMorphAt(dom.childAt(element1, [1, 1]),0,0);
+        morphs[2] = dom.createMorphAt(dom.childAt(element1, [3]),1,1);
+        morphs[3] = dom.createMorphAt(dom.childAt(element2, [1, 1, 1]),2,2);
+        morphs[4] = dom.createMorphAt(dom.childAt(element3, [1, 1]),0,0);
+        morphs[5] = dom.createMorphAt(dom.childAt(element3, [3]),1,1);
+        morphs[6] = dom.createMorphAt(dom.childAt(element4, [1, 1, 1]),2,2);
+        morphs[7] = dom.createMorphAt(dom.childAt(element5, [1, 1]),0,0);
+        morphs[8] = dom.createMorphAt(dom.childAt(element5, [3]),1,1);
         return morphs;
       },
       statements: [
-        ["inline","select-picker",[],["content",["subexpr","@mut",[["get","singleContent",["loc",[null,[8,32],[8,45]]]]],[],[]],"value",["subexpr","@mut",[["get","singleValue",["loc",[null,[9,30],[9,41]]]]],[],[]],"optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[8,8],[11,57]]]],
-        ["block","highlight-code",[],["lang","handlebars"],0,null,["loc",[null,[14,0],[19,19]]]],
-        ["inline","select-picker",[],["content",["subexpr","@mut",[["get","multipleContent",["loc",[null,[32,32],[32,47]]]]],[],[]],"selection",["subexpr","@mut",[["get","multipleValue",["loc",[null,[33,34],[33,47]]]]],[],[]],"multiple",true,"optionGroupPath","group","optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[32,8],[37,57]]]],
-        ["block","highlight-code",[],["lang","handlebars"],1,null,["loc",[null,[40,0],[47,19]]]],
-        ["inline","list-picker",[],["content",["subexpr","@mut",[["get","listContent",["loc",[null,[61,30],[61,41]]]]],[],[]],"selection",["subexpr","@mut",[["get","listValue",["loc",[null,[62,32],[62,41]]]]],[],[]],"multiple","true","optionGroupPath","group","optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[61,8],[66,55]]]],
-        ["block","highlight-code",[],["lang","handlebars"],2,null,["loc",[null,[69,0],[76,19]]]]
+        ["content","singleChoiceStr",["loc",[null,[8,37],[8,56]]]],
+        ["inline","select-picker",[],["content",["subexpr","@mut",[["get","singleContent",["loc",[null,[13,35],[13,48]]]]],[],[]],"selection",["subexpr","@mut",[["get","singleChoice",["loc",[null,[14,37],[14,49]]]]],[],[]],"action",["subexpr","action",["setSingleChoice"],[],["loc",[null,[15,34],[15,60]]]],"optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[13,11],[17,60]]]],
+        ["block","highlight-code",[],["lang","handlebars"],0,null,["loc",[null,[20,0],[26,19]]]],
+        ["content","multipleChoicesStr",["loc",[null,[39,37],[39,59]]]],
+        ["inline","select-picker",[],["content",["subexpr","@mut",[["get","multipleContent",["loc",[null,[44,35],[44,50]]]]],[],[]],"selection",["subexpr","@mut",[["get","multipleChoices",["loc",[null,[45,37],[45,52]]]]],[],[]],"action",["subexpr","action",["setMultipleChoices"],[],["loc",[null,[46,34],[46,63]]]],"multiple",true,"optionGroupPath","group","optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[44,11],[50,60]]]],
+        ["block","highlight-code",[],["lang","handlebars"],1,null,["loc",[null,[53,0],[61,19]]]],
+        ["content","listChoicesStr",["loc",[null,[75,37],[75,55]]]],
+        ["inline","list-picker",[],["content",["subexpr","@mut",[["get","listContent",["loc",[null,[80,33],[80,44]]]]],[],[]],"selection",["subexpr","@mut",[["get","listChoices",["loc",[null,[81,35],[81,46]]]]],[],[]],"action",["subexpr","action",["setListChoices"],[],["loc",[null,[82,32],[82,57]]]],"multiple","true","optionGroupPath","group","optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[80,11],[86,58]]]],
+        ["block","highlight-code",[],["lang","handlebars"],2,null,["loc",[null,[89,0],[97,19]]]]
       ],
       locals: [],
       templates: [child0, child1, child2]
@@ -3396,11 +3542,11 @@ define('test-select-picker/templates/keyboard', ['exports'], function (exports) 
           "loc": {
             "source": null,
             "start": {
-              "line": 50,
+              "line": 56,
               "column": 0
             },
             "end": {
-              "line": 55,
+              "line": 62,
               "column": 0
             }
           },
@@ -3411,7 +3557,7 @@ define('test-select-picker/templates/keyboard', ['exports'], function (exports) 
         hasRendered: false,
         buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{{keyboard-select-picker content=singleContent\n                         value=singleValue\n                         optionLabelPath=\"content.label\"\n                         optionValuePath=\"content.value\"}}\n");
+          var el1 = dom.createTextNode("{{keyboard-select-picker content=singleContent\n                         selection=singleChoice\n                         action=(action \"setSingleChoice\")\n                         optionLabelPath=\"content.label\"\n                         optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -3430,11 +3576,11 @@ define('test-select-picker/templates/keyboard', ['exports'], function (exports) 
           "loc": {
             "source": null,
             "start": {
-              "line": 76,
+              "line": 89,
               "column": 0
             },
             "end": {
-              "line": 83,
+              "line": 97,
               "column": 0
             }
           },
@@ -3445,7 +3591,7 @@ define('test-select-picker/templates/keyboard', ['exports'], function (exports) 
         hasRendered: false,
         buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{{keyboard-select-picker content=multipleContent\n                         selection=multipleValue\n                         multiple=true\n                         optionGroupPath=\"group\"\n                         optionLabelPath=\"content.label\"\n                         optionValuePath=\"content.value\"}}\n");
+          var el1 = dom.createTextNode("{{keyboard-select-picker content=multipleContent\n                         selection=multipleChoices\n                         action=(action \"setMultipleChoices\")\n                         multiple=true\n                         optionGroupPath=\"group\"\n                         optionLabelPath=\"content.label\"\n                         optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -3467,7 +3613,7 @@ define('test-select-picker/templates/keyboard', ['exports'], function (exports) 
             "column": 0
           },
           "end": {
-            "line": 88,
+            "line": 102,
             "column": 0
           }
         },
@@ -3701,6 +3847,32 @@ define('test-select-picker/templates/keyboard', ['exports'], function (exports) 
         var el4 = dom.createTextNode("\n      ");
         dom.appendChild(el3, el4);
         var el4 = dom.createElement("div");
+        dom.setAttribute(el4,"class","col-sm-12");
+        var el5 = dom.createTextNode("\n        ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("p");
+        var el6 = dom.createElement("strong");
+        var el7 = dom.createTextNode("Results:");
+        dom.appendChild(el6, el7);
+        dom.appendChild(el5, el6);
+        var el6 = dom.createTextNode(" ");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createComment("");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n      ");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n    ");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("div");
+        dom.setAttribute(el3,"class","row");
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("div");
         dom.setAttribute(el4,"class","col-sm-4");
         var el5 = dom.createTextNode("\n        ");
         dom.appendChild(el4, el5);
@@ -3758,6 +3930,32 @@ define('test-select-picker/templates/keyboard', ['exports'], function (exports) 
         var el4 = dom.createTextNode("\n      ");
         dom.appendChild(el3, el4);
         var el4 = dom.createElement("div");
+        dom.setAttribute(el4,"class","col-sm-12");
+        var el5 = dom.createTextNode("\n        ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("p");
+        var el6 = dom.createElement("strong");
+        var el7 = dom.createTextNode("Results:");
+        dom.appendChild(el6, el7);
+        dom.appendChild(el5, el6);
+        var el6 = dom.createTextNode(" ");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createComment("");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n      ");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n    ");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("div");
+        dom.setAttribute(el3,"class","row");
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("div");
         dom.setAttribute(el4,"class","col-sm-4");
         var el5 = dom.createTextNode("\n        ");
         dom.appendChild(el4, el5);
@@ -3791,20 +3989,26 @@ define('test-select-picker/templates/keyboard', ['exports'], function (exports) 
         return el0;
       },
       buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
-        var element0 = dom.childAt(fragment, [2, 3, 1]);
-        var element1 = dom.childAt(fragment, [4, 3, 1]);
-        var morphs = new Array(4);
-        morphs[0] = dom.createMorphAt(dom.childAt(element0, [1]),1,1);
-        morphs[1] = dom.createMorphAt(dom.childAt(element0, [3]),1,1);
-        morphs[2] = dom.createMorphAt(dom.childAt(element1, [1]),1,1);
-        morphs[3] = dom.createMorphAt(dom.childAt(element1, [3]),1,1);
+        var element0 = dom.childAt(fragment, [2, 3]);
+        var element1 = dom.childAt(element0, [3]);
+        var element2 = dom.childAt(fragment, [4, 3]);
+        var element3 = dom.childAt(element2, [3]);
+        var morphs = new Array(6);
+        morphs[0] = dom.createMorphAt(dom.childAt(element0, [1, 1, 1]),2,2);
+        morphs[1] = dom.createMorphAt(dom.childAt(element1, [1]),1,1);
+        morphs[2] = dom.createMorphAt(dom.childAt(element1, [3]),1,1);
+        morphs[3] = dom.createMorphAt(dom.childAt(element2, [1, 1, 1]),2,2);
+        morphs[4] = dom.createMorphAt(dom.childAt(element3, [1]),1,1);
+        morphs[5] = dom.createMorphAt(dom.childAt(element3, [3]),1,1);
         return morphs;
       },
       statements: [
-        ["inline","keyboard-select-picker",[],["content",["subexpr","@mut",[["get","singleContent",["loc",[null,[44,41],[44,54]]]]],[],[]],"value",["subexpr","@mut",[["get","singleValue",["loc",[null,[45,39],[45,50]]]]],[],[]],"optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[44,8],[47,66]]]],
-        ["block","highlight-code",[],["lang","handlebars"],0,null,["loc",[null,[50,0],[55,19]]]],
-        ["inline","keyboard-select-picker",[],["content",["subexpr","@mut",[["get","multipleContent",["loc",[null,[68,41],[68,56]]]]],[],[]],"selection",["subexpr","@mut",[["get","multipleValue",["loc",[null,[69,43],[69,56]]]]],[],[]],"multiple",true,"optionGroupPath","group","optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[68,8],[73,66]]]],
-        ["block","highlight-code",[],["lang","handlebars"],1,null,["loc",[null,[76,0],[83,19]]]]
+        ["content","singleChoiceStr",["loc",[null,[44,37],[44,56]]]],
+        ["inline","keyboard-select-picker",[],["content",["subexpr","@mut",[["get","singleContent",["loc",[null,[49,41],[49,54]]]]],[],[]],"selection",["subexpr","@mut",[["get","singleChoice",["loc",[null,[50,43],[50,55]]]]],[],[]],"action",["subexpr","action",["setSingleChoice"],[],["loc",[null,[51,40],[51,66]]]],"optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[49,8],[53,66]]]],
+        ["block","highlight-code",[],["lang","handlebars"],0,null,["loc",[null,[56,0],[62,19]]]],
+        ["content","multipleChoicesStr",["loc",[null,[75,37],[75,59]]]],
+        ["inline","keyboard-select-picker",[],["content",["subexpr","@mut",[["get","multipleContent",["loc",[null,[80,41],[80,56]]]]],[],[]],"selection",["subexpr","@mut",[["get","multipleChoices",["loc",[null,[81,43],[81,58]]]]],[],[]],"action",["subexpr","action",["setMultipleChoices"],[],["loc",[null,[82,40],[82,69]]]],"multiple",true,"optionGroupPath","group","optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[80,8],[86,66]]]],
+        ["block","highlight-code",[],["lang","handlebars"],1,null,["loc",[null,[89,0],[97,19]]]]
       ],
       locals: [],
       templates: [child0, child1]
@@ -3824,11 +4028,11 @@ define('test-select-picker/templates/options', ['exports'], function (exports) {
           "loc": {
             "source": null,
             "start": {
-              "line": 17,
+              "line": 23,
               "column": 0
             },
             "end": {
-              "line": 25,
+              "line": 32,
               "column": 0
             }
           },
@@ -3839,7 +4043,7 @@ define('test-select-picker/templates/options', ['exports'], function (exports) {
         hasRendered: false,
         buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleValue\n                multiple=true\n                showBadge=true\n                summaryMessage=\"Multiple items selected\"\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
+          var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleChoices\n                action=(action \"setMultipleChoices\")\n                multiple=true\n                showBadge=true\n                summaryMessage=\"Multiple items selected\"\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -3858,11 +4062,11 @@ define('test-select-picker/templates/options', ['exports'], function (exports) {
           "loc": {
             "source": null,
             "start": {
-              "line": 47,
+              "line": 60,
               "column": 0
             },
             "end": {
-              "line": 54,
+              "line": 68,
               "column": 0
             }
           },
@@ -3873,7 +4077,7 @@ define('test-select-picker/templates/options', ['exports'], function (exports) {
         hasRendered: false,
         buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleValue\n                multiple=true\n                nativeMobile=false\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
+          var el1 = dom.createTextNode("{{select-picker content=multipleContent\n                selection=multipleChoices\n                action=(action \"setMultipleChoices\")\n                multiple=true\n                nativeMobile=false\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -3892,11 +4096,11 @@ define('test-select-picker/templates/options', ['exports'], function (exports) {
           "loc": {
             "source": null,
             "start": {
-              "line": 68,
-              "column": 8
+              "line": 87,
+              "column": 11
             },
             "end": {
-              "line": 77,
+              "line": 97,
               "column": 8
             }
           },
@@ -3907,7 +4111,7 @@ define('test-select-picker/templates/options', ['exports'], function (exports) {
         hasRendered: false,
         buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("          ");
+          var el1 = dom.createTextNode("\n          ");
           dom.appendChild(el0, el1);
           var el1 = dom.createElement("div");
           dom.setAttribute(el1,"class","alert alert-info clearfix");
@@ -3921,7 +4125,7 @@ define('test-select-picker/templates/options', ['exports'], function (exports) {
           var el2 = dom.createTextNode("\n          ");
           dom.appendChild(el1, el2);
           dom.appendChild(el0, el1);
-          var el1 = dom.createTextNode("\n");
+          var el1 = dom.createTextNode("\n        ");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -3932,7 +4136,7 @@ define('test-select-picker/templates/options', ['exports'], function (exports) {
           return morphs;
         },
         statements: [
-          ["element","action",["sayHello"],[],["loc",[null,[75,68],[75,89]]]]
+          ["element","action",["sayHello"],[],["loc",[null,[95,68],[95,89]]]]
         ],
         locals: [],
         templates: []
@@ -3945,11 +4149,11 @@ define('test-select-picker/templates/options', ['exports'], function (exports) {
           "loc": {
             "source": null,
             "start": {
-              "line": 80,
+              "line": 100,
               "column": 0
             },
             "end": {
-              "line": 91,
+              "line": 112,
               "column": 0
             }
           },
@@ -3960,7 +4164,7 @@ define('test-select-picker/templates/options', ['exports'], function (exports) {
         hasRendered: false,
         buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{{#select-picker content=multipleContent\n                 selection=multipleValue\n                 multiple=true\n                 summaryMessage=\"Example content inside\"\n                 optionLabelPath=\"content.label\"\n                 optionValuePath=\"content.value\"}}\n  <div class=\"alert alert-info\">\n    Hello! Try this <button ");
+          var el1 = dom.createTextNode("{{#select-picker content=multipleContent\n                 selection=multipleChoices\n                 action=(action \"setMultipleChoices\")\n                 multiple=true\n                 summaryMessage=\"Example content inside\"\n                 optionLabelPath=\"content.label\"\n                 optionValuePath=\"content.value\"}}\n  <div class=\"alert alert-info\">\n    Hello! Try this <button ");
           dom.appendChild(el0, el1);
           var el1 = dom.createTextNode("{{action \"sayHello\"}}>button</button>\n  </div>\n");
           dom.appendChild(el0, el1);
@@ -3986,7 +4190,7 @@ define('test-select-picker/templates/options', ['exports'], function (exports) {
             "column": 0
           },
           "end": {
-            "line": 96,
+            "line": 117,
             "column": 0
           }
         },
@@ -4024,10 +4228,38 @@ define('test-select-picker/templates/options', ['exports'], function (exports) {
         var el4 = dom.createTextNode("\n      ");
         dom.appendChild(el3, el4);
         var el4 = dom.createElement("div");
+        dom.setAttribute(el4,"class","col-sm-12");
+        var el5 = dom.createTextNode("\n        ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("p");
+        var el6 = dom.createElement("strong");
+        var el7 = dom.createTextNode("Results:");
+        dom.appendChild(el6, el7);
+        dom.appendChild(el5, el6);
+        var el6 = dom.createTextNode(" ");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createComment("");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n      ");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n    ");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("div");
+        dom.setAttribute(el3,"class","row");
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("div");
         dom.setAttribute(el4,"class","col-sm-4");
         var el5 = dom.createTextNode("\n        ");
         dom.appendChild(el4, el5);
-        var el5 = dom.createComment("");
+        var el5 = dom.createElement("p");
+        var el6 = dom.createComment("");
+        dom.appendChild(el5, el6);
         dom.appendChild(el4, el5);
         var el5 = dom.createTextNode("\n      ");
         dom.appendChild(el4, el5);
@@ -4076,20 +4308,46 @@ define('test-select-picker/templates/options', ['exports'], function (exports) {
         dom.setAttribute(el2,"class","panel-body");
         var el3 = dom.createTextNode("\n    ");
         dom.appendChild(el2, el3);
-        var el3 = dom.createElement("p");
-        var el4 = dom.createTextNode("By default the native select widget is used for small screens (mobile) If you want the Bootstrap styled picker on mobile devices then you need to set ");
+        var el3 = dom.createElement("div");
+        dom.setAttribute(el3,"class","row");
+        var el4 = dom.createTextNode("\n      ");
         dom.appendChild(el3, el4);
-        var el4 = dom.createElement("code");
-        var el5 = dom.createTextNode("nativeMobile");
+        var el4 = dom.createElement("div");
+        dom.setAttribute(el4,"class","col-sm-12");
+        var el5 = dom.createTextNode("\n        ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("p");
+        var el6 = dom.createTextNode("By default the native select widget is used for small screens (mobile) If you want the Bootstrap styled picker on mobile devices then you need to set ");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createElement("code");
+        var el7 = dom.createTextNode("nativeMobile");
+        dom.appendChild(el6, el7);
+        dom.appendChild(el5, el6);
+        var el6 = dom.createTextNode(" to ");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createElement("em");
+        var el7 = dom.createTextNode("false");
+        dom.appendChild(el6, el7);
+        dom.appendChild(el5, el6);
+        var el6 = dom.createTextNode(".");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n        ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("p");
+        var el6 = dom.createElement("strong");
+        var el7 = dom.createTextNode("Results:");
+        dom.appendChild(el6, el7);
+        dom.appendChild(el5, el6);
+        var el6 = dom.createTextNode(" ");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createComment("");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n      ");
         dom.appendChild(el4, el5);
         dom.appendChild(el3, el4);
-        var el4 = dom.createTextNode(" to ");
-        dom.appendChild(el3, el4);
-        var el4 = dom.createElement("em");
-        var el5 = dom.createTextNode("false");
-        dom.appendChild(el4, el5);
-        dom.appendChild(el3, el4);
-        var el4 = dom.createTextNode(".");
+        var el4 = dom.createTextNode("\n    ");
         dom.appendChild(el3, el4);
         dom.appendChild(el2, el3);
         var el3 = dom.createTextNode("\n    ");
@@ -4102,7 +4360,9 @@ define('test-select-picker/templates/options', ['exports'], function (exports) {
         dom.setAttribute(el4,"class","col-sm-4");
         var el5 = dom.createTextNode("\n        ");
         dom.appendChild(el4, el5);
-        var el5 = dom.createComment("");
+        var el5 = dom.createElement("p");
+        var el6 = dom.createComment("");
+        dom.appendChild(el5, el6);
         dom.appendChild(el4, el5);
         var el5 = dom.createTextNode("\n      ");
         dom.appendChild(el4, el5);
@@ -4151,8 +4411,34 @@ define('test-select-picker/templates/options', ['exports'], function (exports) {
         dom.setAttribute(el2,"class","panel-body");
         var el3 = dom.createTextNode("\n    ");
         dom.appendChild(el2, el3);
-        var el3 = dom.createElement("p");
-        var el4 = dom.createTextNode("You can add your own custom content to the top of the drop down by using Ember's block syntax.");
+        var el3 = dom.createElement("div");
+        dom.setAttribute(el3,"class","row");
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("div");
+        dom.setAttribute(el4,"class","col-sm-12");
+        var el5 = dom.createTextNode("\n        ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("p");
+        var el6 = dom.createTextNode("You can add your own custom content to the top of the drop down by using Ember's block syntax.");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n        ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("p");
+        var el6 = dom.createElement("strong");
+        var el7 = dom.createTextNode("Results:");
+        dom.appendChild(el6, el7);
+        dom.appendChild(el5, el6);
+        var el6 = dom.createTextNode(" ");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createComment("");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n      ");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n    ");
         dom.appendChild(el3, el4);
         dom.appendChild(el2, el3);
         var el3 = dom.createTextNode("\n    ");
@@ -4163,11 +4449,13 @@ define('test-select-picker/templates/options', ['exports'], function (exports) {
         dom.appendChild(el3, el4);
         var el4 = dom.createElement("div");
         dom.setAttribute(el4,"class","col-sm-4");
-        var el5 = dom.createTextNode("\n");
+        var el5 = dom.createTextNode("\n        ");
         dom.appendChild(el4, el5);
-        var el5 = dom.createComment("");
+        var el5 = dom.createElement("p");
+        var el6 = dom.createComment("");
+        dom.appendChild(el5, el6);
         dom.appendChild(el4, el5);
-        var el5 = dom.createTextNode("      ");
+        var el5 = dom.createTextNode("\n      ");
         dom.appendChild(el4, el5);
         dom.appendChild(el3, el4);
         var el4 = dom.createTextNode("\n      ");
@@ -4195,25 +4483,34 @@ define('test-select-picker/templates/options', ['exports'], function (exports) {
         return el0;
       },
       buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
-        var element1 = dom.childAt(fragment, [0, 3, 1]);
-        var element2 = dom.childAt(fragment, [2, 3, 3]);
-        var element3 = dom.childAt(fragment, [4, 3, 3]);
-        var morphs = new Array(6);
-        morphs[0] = dom.createMorphAt(dom.childAt(element1, [1]),1,1);
-        morphs[1] = dom.createMorphAt(dom.childAt(element1, [3]),1,1);
-        morphs[2] = dom.createMorphAt(dom.childAt(element2, [1]),1,1);
-        morphs[3] = dom.createMorphAt(dom.childAt(element2, [3]),1,1);
-        morphs[4] = dom.createMorphAt(dom.childAt(element3, [1]),1,1);
-        morphs[5] = dom.createMorphAt(dom.childAt(element3, [3]),1,1);
+        var element1 = dom.childAt(fragment, [0, 3]);
+        var element2 = dom.childAt(element1, [3]);
+        var element3 = dom.childAt(fragment, [2, 3]);
+        var element4 = dom.childAt(element3, [3]);
+        var element5 = dom.childAt(fragment, [4, 3]);
+        var element6 = dom.childAt(element5, [3]);
+        var morphs = new Array(9);
+        morphs[0] = dom.createMorphAt(dom.childAt(element1, [1, 1, 1]),2,2);
+        morphs[1] = dom.createMorphAt(dom.childAt(element2, [1, 1]),0,0);
+        morphs[2] = dom.createMorphAt(dom.childAt(element2, [3]),1,1);
+        morphs[3] = dom.createMorphAt(dom.childAt(element3, [1, 1, 3]),2,2);
+        morphs[4] = dom.createMorphAt(dom.childAt(element4, [1, 1]),0,0);
+        morphs[5] = dom.createMorphAt(dom.childAt(element4, [3]),1,1);
+        morphs[6] = dom.createMorphAt(dom.childAt(element5, [1, 1, 3]),2,2);
+        morphs[7] = dom.createMorphAt(dom.childAt(element6, [1, 1]),0,0);
+        morphs[8] = dom.createMorphAt(dom.childAt(element6, [3]),1,1);
         return morphs;
       },
       statements: [
-        ["inline","select-picker",[],["content",["subexpr","@mut",[["get","multipleContent",["loc",[null,[8,32],[8,47]]]]],[],[]],"selection",["subexpr","@mut",[["get","multipleValue",["loc",[null,[9,34],[9,47]]]]],[],[]],"multiple",true,"showBadge",true,"summaryMessage","Multiple items selected","optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[8,8],[14,57]]]],
-        ["block","highlight-code",[],["lang","handlebars"],0,null,["loc",[null,[17,0],[25,19]]]],
-        ["inline","select-picker",[],["content",["subexpr","@mut",[["get","multipleContent",["loc",[null,[39,32],[39,47]]]]],[],[]],"selection",["subexpr","@mut",[["get","multipleValue",["loc",[null,[40,34],[40,47]]]]],[],[]],"multiple",true,"nativeMobile",false,"optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[39,8],[44,57]]]],
-        ["block","highlight-code",[],["lang","handlebars"],1,null,["loc",[null,[47,0],[54,19]]]],
-        ["block","select-picker",[],["content",["subexpr","@mut",[["get","multipleContent",["loc",[null,[68,33],[68,48]]]]],[],[]],"selection",["subexpr","@mut",[["get","multipleValue",["loc",[null,[69,35],[69,48]]]]],[],[]],"multiple",true,"summaryMessage","Example content inside","optionLabelPath","content.label","optionValuePath","content.value"],2,null,["loc",[null,[68,8],[77,26]]]],
-        ["block","highlight-code",[],["lang","handlebars"],3,null,["loc",[null,[80,0],[91,19]]]]
+        ["content","multipleChoicesStr",["loc",[null,[8,37],[8,59]]]],
+        ["inline","select-picker",[],["content",["subexpr","@mut",[["get","multipleContent",["loc",[null,[13,35],[13,50]]]]],[],[]],"selection",["subexpr","@mut",[["get","multipleChoices",["loc",[null,[14,37],[14,52]]]]],[],[]],"action",["subexpr","action",["setMultipleChoices"],[],["loc",[null,[15,34],[15,63]]]],"multiple",true,"showBadge",true,"summaryMessage","Multiple items selected","optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[13,11],[20,60]]]],
+        ["block","highlight-code",[],["lang","handlebars"],0,null,["loc",[null,[23,0],[32,19]]]],
+        ["content","multipleChoicesStr",["loc",[null,[46,37],[46,59]]]],
+        ["inline","select-picker",[],["content",["subexpr","@mut",[["get","multipleContent",["loc",[null,[51,35],[51,50]]]]],[],[]],"selection",["subexpr","@mut",[["get","multipleChoices",["loc",[null,[52,37],[52,52]]]]],[],[]],"action",["subexpr","action",["setMultipleChoices"],[],["loc",[null,[53,34],[53,63]]]],"multiple",true,"nativeMobile",false,"optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[51,11],[57,60]]]],
+        ["block","highlight-code",[],["lang","handlebars"],1,null,["loc",[null,[60,0],[68,19]]]],
+        ["content","multipleChoicesStr",["loc",[null,[82,37],[82,59]]]],
+        ["block","select-picker",[],["content",["subexpr","@mut",[["get","multipleContent",["loc",[null,[87,36],[87,51]]]]],[],[]],"selection",["subexpr","@mut",[["get","multipleChoices",["loc",[null,[88,38],[88,53]]]]],[],[]],"action",["subexpr","action",["setMultipleChoices"],[],["loc",[null,[89,35],[89,64]]]],"multiple",true,"summaryMessage","Example content inside","optionLabelPath","content.label","optionValuePath","content.value"],2,null,["loc",[null,[87,11],[97,26]]]],
+        ["block","highlight-code",[],["lang","handlebars"],3,null,["loc",[null,[100,0],[112,19]]]]
       ],
       locals: [],
       templates: [child0, child1, child2, child3]
@@ -4233,11 +4530,11 @@ define('test-select-picker/templates/searching', ['exports'], function (exports)
           "loc": {
             "source": null,
             "start": {
-              "line": 17,
+              "line": 25,
               "column": 0
             },
             "end": {
-              "line": 25,
+              "line": 34,
               "column": 0
             }
           },
@@ -4248,7 +4545,7 @@ define('test-select-picker/templates/searching', ['exports'], function (exports)
         hasRendered: false,
         buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{{select-picker content=simpleSearchContent\n                selection=simpleSearchValue\n                multiple=true\n                liveSearch=true\n                optionGroupPath=\"group\"\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
+          var el1 = dom.createTextNode("{{select-picker content=simpleSearchContent\n                selection=simpleSearchChoices\n                action=(action \"setSimpleSearchChoices\")\n                multiple=true\n                liveSearch=true\n                optionGroupPath=\"group\"\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -4267,11 +4564,11 @@ define('test-select-picker/templates/searching', ['exports'], function (exports)
           "loc": {
             "source": null,
             "start": {
-              "line": 47,
+              "line": 64,
               "column": 0
             },
             "end": {
-              "line": 55,
+              "line": 73,
               "column": 0
             }
           },
@@ -4282,7 +4579,7 @@ define('test-select-picker/templates/searching', ['exports'], function (exports)
         hasRendered: false,
         buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{{select-picker content=advancedSearchContent\n                selection=advancedSearchValue\n                multiple=true\n                liveSearch=\"advanced\"\n                optionGroupPath=\"group\"\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
+          var el1 = dom.createTextNode("{{select-picker content=advancedSearchContent\n                selection=advancedSearchChoices\n                action=(action \"setAdvancedSearchChoices\")\n                multiple=true\n                liveSearch=\"advanced\"\n                optionGroupPath=\"group\"\n                optionLabelPath=\"content.label\"\n                optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -4301,11 +4598,11 @@ define('test-select-picker/templates/searching', ['exports'], function (exports)
           "loc": {
             "source": null,
             "start": {
-              "line": 77,
+              "line": 101,
               "column": 0
             },
             "end": {
-              "line": 85,
+              "line": 110,
               "column": 0
             }
           },
@@ -4316,7 +4613,7 @@ define('test-select-picker/templates/searching', ['exports'], function (exports)
         hasRendered: false,
         buildFragment: function buildFragment(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("{{list-picker content=advancedSearchContent\n              selection=listSearchValue\n              multiple=true\n              liveSearch=\"advanced\"\n              optionGroupPath=\"group\"\n              optionLabelPath=\"content.label\"\n              optionValuePath=\"content.value\"}}\n");
+          var el1 = dom.createTextNode("{{list-picker content=advancedSearchContent\n              selection=listSearchChoices\n              action=(action \"setListSearchChoices\")\n              multiple=true\n              liveSearch=\"advanced\"\n              optionGroupPath=\"group\"\n              optionLabelPath=\"content.label\"\n              optionValuePath=\"content.value\"}}\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -4338,7 +4635,7 @@ define('test-select-picker/templates/searching', ['exports'], function (exports)
             "column": 0
           },
           "end": {
-            "line": 90,
+            "line": 115,
             "column": 0
           }
         },
@@ -4369,6 +4666,83 @@ define('test-select-picker/templates/searching', ['exports'], function (exports)
         dom.appendChild(el1, el2);
         var el2 = dom.createElement("div");
         dom.setAttribute(el2,"class","panel-body");
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("div");
+        dom.setAttribute(el3,"class","row");
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("div");
+        dom.setAttribute(el4,"class","col-sm-12");
+        var el5 = dom.createTextNode("\n        ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("p");
+        dom.setAttribute(el5,"class","search-examples");
+        var el6 = dom.createTextNode("Simple search attempts to match terms as full strings.");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n        ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("p");
+        var el6 = dom.createTextNode("For example the term ");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createElement("code");
+        var el7 = dom.createTextNode("def");
+        dom.appendChild(el6, el7);
+        dom.appendChild(el5, el6);
+        var el6 = dom.createTextNode(" would match the words ");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createElement("code");
+        var el7 = dom.createTextNode("abc");
+        dom.appendChild(el6, el7);
+        var el7 = dom.createElement("u");
+        var el8 = dom.createTextNode("def");
+        dom.appendChild(el7, el8);
+        dom.appendChild(el6, el7);
+        dom.appendChild(el5, el6);
+        var el6 = dom.createTextNode(", ");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createElement("code");
+        var el7 = dom.createElement("u");
+        var el8 = dom.createTextNode("def");
+        dom.appendChild(el7, el8);
+        dom.appendChild(el6, el7);
+        var el7 = dom.createTextNode("ghi");
+        dom.appendChild(el6, el7);
+        dom.appendChild(el5, el6);
+        var el6 = dom.createTextNode(", or ");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createElement("code");
+        var el7 = dom.createTextNode("in");
+        dom.appendChild(el6, el7);
+        var el7 = dom.createElement("u");
+        var el8 = dom.createTextNode("def");
+        dom.appendChild(el7, el8);
+        dom.appendChild(el6, el7);
+        var el7 = dom.createTextNode("initely");
+        dom.appendChild(el6, el7);
+        dom.appendChild(el5, el6);
+        var el6 = dom.createTextNode(".");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n        ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("p");
+        var el6 = dom.createElement("strong");
+        var el7 = dom.createTextNode("Result:");
+        dom.appendChild(el6, el7);
+        dom.appendChild(el5, el6);
+        var el6 = dom.createTextNode(" ");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createComment("");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n      ");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n    ");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
         var el3 = dom.createTextNode("\n    ");
         dom.appendChild(el2, el3);
         var el3 = dom.createElement("div");
@@ -4433,6 +4807,83 @@ define('test-select-picker/templates/searching', ['exports'], function (exports)
         var el4 = dom.createTextNode("\n      ");
         dom.appendChild(el3, el4);
         var el4 = dom.createElement("div");
+        dom.setAttribute(el4,"class","col-sm-12");
+        var el5 = dom.createTextNode("\n        ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("p");
+        dom.setAttribute(el5,"class","search-examples");
+        var el6 = dom.createTextNode("Advanced search finds terms through a fuzzy match. It looks for characters in the string that appear in order from left to right with any number of other character in between.");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n        ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("p");
+        var el6 = dom.createTextNode("For example the search term ");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createElement("code");
+        var el7 = dom.createTextNode("def");
+        dom.appendChild(el6, el7);
+        dom.appendChild(el5, el6);
+        var el6 = dom.createTextNode(" would match ");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createElement("code");
+        var el7 = dom.createTextNode("abc");
+        dom.appendChild(el6, el7);
+        var el7 = dom.createElement("u");
+        var el8 = dom.createTextNode("def");
+        dom.appendChild(el7, el8);
+        dom.appendChild(el6, el7);
+        dom.appendChild(el5, el6);
+        var el6 = dom.createTextNode(" or ");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createElement("code");
+        var el7 = dom.createElement("u");
+        var el8 = dom.createTextNode("d");
+        dom.appendChild(el7, el8);
+        dom.appendChild(el6, el7);
+        var el7 = dom.createTextNode("iv");
+        dom.appendChild(el6, el7);
+        var el7 = dom.createElement("u");
+        var el8 = dom.createTextNode("e");
+        dom.appendChild(el7, el8);
+        dom.appendChild(el6, el7);
+        var el7 = dom.createTextNode("rsi");
+        dom.appendChild(el6, el7);
+        var el7 = dom.createElement("u");
+        var el8 = dom.createTextNode("f");
+        dom.appendChild(el7, el8);
+        dom.appendChild(el6, el7);
+        var el7 = dom.createTextNode("y");
+        dom.appendChild(el6, el7);
+        dom.appendChild(el5, el6);
+        var el6 = dom.createTextNode(".");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n        ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("p");
+        var el6 = dom.createElement("strong");
+        var el7 = dom.createTextNode("Result:");
+        dom.appendChild(el6, el7);
+        dom.appendChild(el5, el6);
+        var el6 = dom.createTextNode(" ");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createComment("");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n      ");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n    ");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("div");
+        dom.setAttribute(el3,"class","row");
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("div");
         dom.setAttribute(el4,"class","col-sm-4");
         var el5 = dom.createTextNode("\n        ");
         dom.appendChild(el4, el5);
@@ -4490,6 +4941,32 @@ define('test-select-picker/templates/searching', ['exports'], function (exports)
         var el4 = dom.createTextNode("\n      ");
         dom.appendChild(el3, el4);
         var el4 = dom.createElement("div");
+        dom.setAttribute(el4,"class","col-sm-12");
+        var el5 = dom.createTextNode("\n        ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("p");
+        var el6 = dom.createElement("strong");
+        var el7 = dom.createTextNode("Result:");
+        dom.appendChild(el6, el7);
+        dom.appendChild(el5, el6);
+        var el6 = dom.createTextNode(" ");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createComment("");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n      ");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n    ");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
+        var el3 = dom.createTextNode("\n    ");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("div");
+        dom.setAttribute(el3,"class","row");
+        var el4 = dom.createTextNode("\n      ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("div");
         dom.setAttribute(el4,"class","col-sm-4");
         var el5 = dom.createTextNode("\n        ");
         dom.appendChild(el4, el5);
@@ -4523,25 +5000,34 @@ define('test-select-picker/templates/searching', ['exports'], function (exports)
         return el0;
       },
       buildRenderNodes: function buildRenderNodes(dom, fragment, contextualElement) {
-        var element0 = dom.childAt(fragment, [0, 3, 1]);
-        var element1 = dom.childAt(fragment, [2, 3, 1]);
-        var element2 = dom.childAt(fragment, [4, 3, 1]);
-        var morphs = new Array(6);
-        morphs[0] = dom.createMorphAt(dom.childAt(element0, [1]),1,1);
-        morphs[1] = dom.createMorphAt(dom.childAt(element0, [3]),1,1);
-        morphs[2] = dom.createMorphAt(dom.childAt(element1, [1]),1,1);
-        morphs[3] = dom.createMorphAt(dom.childAt(element1, [3]),1,1);
-        morphs[4] = dom.createMorphAt(dom.childAt(element2, [1]),1,1);
-        morphs[5] = dom.createMorphAt(dom.childAt(element2, [3]),1,1);
+        var element0 = dom.childAt(fragment, [0, 3]);
+        var element1 = dom.childAt(element0, [3]);
+        var element2 = dom.childAt(fragment, [2, 3]);
+        var element3 = dom.childAt(element2, [3]);
+        var element4 = dom.childAt(fragment, [4, 3]);
+        var element5 = dom.childAt(element4, [3]);
+        var morphs = new Array(9);
+        morphs[0] = dom.createMorphAt(dom.childAt(element0, [1, 1, 5]),2,2);
+        morphs[1] = dom.createMorphAt(dom.childAt(element1, [1]),1,1);
+        morphs[2] = dom.createMorphAt(dom.childAt(element1, [3]),1,1);
+        morphs[3] = dom.createMorphAt(dom.childAt(element2, [1, 1, 5]),2,2);
+        morphs[4] = dom.createMorphAt(dom.childAt(element3, [1]),1,1);
+        morphs[5] = dom.createMorphAt(dom.childAt(element3, [3]),1,1);
+        morphs[6] = dom.createMorphAt(dom.childAt(element4, [1, 1, 1]),2,2);
+        morphs[7] = dom.createMorphAt(dom.childAt(element5, [1]),1,1);
+        morphs[8] = dom.createMorphAt(dom.childAt(element5, [3]),1,1);
         return morphs;
       },
       statements: [
-        ["inline","select-picker",[],["content",["subexpr","@mut",[["get","simpleSearchContent",["loc",[null,[8,32],[8,51]]]]],[],[]],"selection",["subexpr","@mut",[["get","simpleSearchValue",["loc",[null,[9,34],[9,51]]]]],[],[]],"multiple",true,"liveSearch",true,"optionGroupPath","group","optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[8,8],[14,57]]]],
-        ["block","highlight-code",[],["lang","handlebars"],0,null,["loc",[null,[17,0],[25,19]]]],
-        ["inline","select-picker",[],["content",["subexpr","@mut",[["get","advancedSearchContent",["loc",[null,[38,32],[38,53]]]]],[],[]],"selection",["subexpr","@mut",[["get","advancedSearchValue",["loc",[null,[39,34],[39,53]]]]],[],[]],"multiple",true,"liveSearch","advanced","optionGroupPath","group","optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[38,8],[44,57]]]],
-        ["block","highlight-code",[],["lang","handlebars"],1,null,["loc",[null,[47,0],[55,19]]]],
-        ["inline","list-picker",[],["content",["subexpr","@mut",[["get","listSearchContent",["loc",[null,[68,30],[68,47]]]]],[],[]],"selection",["subexpr","@mut",[["get","listSearchValue",["loc",[null,[69,32],[69,47]]]]],[],[]],"multiple",true,"liveSearch","advanced","optionGroupPath","group","optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[68,8],[74,55]]]],
-        ["block","highlight-code",[],["lang","handlebars"],2,null,["loc",[null,[77,0],[85,19]]]]
+        ["content","simpleSearchChoicesStr",["loc",[null,[10,36],[10,62]]]],
+        ["inline","select-picker",[],["content",["subexpr","@mut",[["get","simpleSearchContent",["loc",[null,[15,32],[15,51]]]]],[],[]],"selection",["subexpr","@mut",[["get","simpleSearchChoices",["loc",[null,[16,34],[16,53]]]]],[],[]],"action",["subexpr","action",["setSimpleSearchChoices"],[],["loc",[null,[17,31],[17,64]]]],"multiple",true,"liveSearch",true,"optionGroupPath","group","optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[15,8],[22,57]]]],
+        ["block","highlight-code",[],["lang","handlebars"],0,null,["loc",[null,[25,0],[34,19]]]],
+        ["content","advancedSearchChoicesStr",["loc",[null,[49,36],[49,64]]]],
+        ["inline","select-picker",[],["content",["subexpr","@mut",[["get","advancedSearchContent",["loc",[null,[54,32],[54,53]]]]],[],[]],"selection",["subexpr","@mut",[["get","advancedSearchChoices",["loc",[null,[55,34],[55,55]]]]],[],[]],"action",["subexpr","action",["setAdvancedSearchChoices"],[],["loc",[null,[56,31],[56,66]]]],"multiple",true,"liveSearch","advanced","optionGroupPath","group","optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[54,8],[61,57]]]],
+        ["block","highlight-code",[],["lang","handlebars"],1,null,["loc",[null,[64,0],[73,19]]]],
+        ["content","listSearchChoicesStr",["loc",[null,[86,36],[86,60]]]],
+        ["inline","list-picker",[],["content",["subexpr","@mut",[["get","listSearchContent",["loc",[null,[91,30],[91,47]]]]],[],[]],"selection",["subexpr","@mut",[["get","listSearchChoices",["loc",[null,[92,32],[92,49]]]]],[],[]],"action",["subexpr","action",["setListSearchChoices"],[],["loc",[null,[93,29],[93,60]]]],"multiple",true,"liveSearch","advanced","optionGroupPath","group","optionLabelPath","content.label","optionValuePath","content.value"],["loc",[null,[91,8],[98,55]]]],
+        ["block","highlight-code",[],["lang","handlebars"],2,null,["loc",[null,[101,0],[110,19]]]]
       ],
       locals: [],
       templates: [child0, child1, child2]
@@ -4577,7 +5063,7 @@ catch(err) {
 if (runningTests) {
   require("test-select-picker/tests/test-helper");
 } else {
-  require("test-select-picker/app")["default"].create({"addonVersion":"2.1.0","name":"test-select-picker","version":"0.0.0+e97c749a"});
+  require("test-select-picker/app")["default"].create({"addonVersion":"2.2.0","name":"test-select-picker","version":"0.0.0+fa9a2ec9"});
 }
 
 /* jshint ignore:end */
