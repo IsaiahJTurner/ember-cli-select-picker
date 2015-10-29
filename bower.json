@@ -14,7 +14,6 @@
     "qunit": "~1.18.0",
     "chance": "~0.7.3",
     "highlightjs": "~8.4.0",
-    "bootstrap": "~3.3.4",
-    "mousetrap": "~1.5.2"
+    "bootstrap": "~3.3.4"
   }
 }
