@@ -3,15 +3,6 @@
 
 /* jshint ignore:end */
 
-define('test-select-picker/acceptance-tests/main', ['exports', 'ember-cli-sri/acceptance-tests/main'], function (exports, main) {
-
-	'use strict';
-
-
-
-	exports['default'] = main['default'];
-
-});
 define('test-select-picker/app', ['exports', 'ember', 'ember/resolver', 'ember/load-initializers', 'test-select-picker/config/environment'], function (exports, Ember, Resolver, loadInitializers, config) {
 
   'use strict';
@@ -57,97 +48,61 @@ define('test-select-picker/components/highlight-code', ['exports', 'ember'], fun
   });
 
 });
-define('test-select-picker/components/keyboard-select-picker', ['exports', 'ember', 'test-select-picker/components/select-picker', 'ember-keyboard-shortcuts/mixins/component'], function (exports, Ember, SelectPicker, KeyboardShortcutsMixin) {
+define('test-select-picker/components/keyboard-select-picker', ['exports', 'ember', 'test-select-picker/components/select-picker', 'ember-cli-select-picker/mixins/item-cursor'], function (exports, Ember, SelectPicker, ItemCursorMixin) {
 
   'use strict';
 
-  function makeKeyboardAction(fn) {
-    return function () {
-      if (!this.get('showDropdown')) {
-        // ignore keyboard input on components that are not *in focus*
-        return true;
-      }
-      fn.apply(this, arguments);
-      return false;
-    };
-  }
+  var KEY_ENTER = 13;
+  var KEY_ESC = 27;
+  var KEY_UP = 38;
+  var KEY_DOWN = 40;
 
-  var KeyboardSelectPickerComponent = SelectPicker['default'].extend(KeyboardShortcutsMixin['default'], {
-
+  exports['default'] = SelectPicker['default'].extend(ItemCursorMixin['default'], {
     layoutName: 'components/select-picker',
-
-    nativeMobile: true,
-
-    activeCursor: null,
-
     classNames: ['select-picker', 'keyboard-select-picker'],
 
-    previousActiveIndex: 0,
-
-    updateActiveItem: Ember['default'].observer('activeCursor', 'contentList.length', function () {
-      var _this = this;
-
-      var previousActiveIndex = this.get('previousActiveIndex');
-      var activeIndex = this.get('activeIndex');
-      if (Ember['default'].typeOf(activeIndex) !== 'number') {
-        return;
-      }
-      Ember['default'].changeProperties(function () {
-        _this.set('contentList.' + previousActiveIndex + '.active', false);
-        _this.set('contentList.' + activeIndex + '.active', true);
-        _this.set('previousActiveIndex', activeIndex);
-      });
-    }),
-
-    activeIndex: Ember['default'].computed('activeCursor', 'contentList.length', function () {
-      var cursor = this.get('activeCursor');
-      if (Ember['default'].isNone(cursor)) {
-        return null;
-      }
-      var len = this.get('contentList.length');
-      return (cursor % len + len) % len;
-    }),
-
-    activeItem: Ember['default'].computed('activeIndex', 'contentList.[]', function () {
-      return this.get('contentList').objectAt(this.get('activeIndex'));
-    }),
-
-    keyboardShortcuts: {
-      'enter': 'selectActiveItem',
-      'up': 'activePrev',
-      'down': 'activeNext',
-      'shift+tab': 'activePrev',
-      'tab': 'activeNext',
-      'esc': 'closeDropdown'
+    didInsertElement: function didInsertElement() {
+      this.$().on('keydown.' + this.get('elementId'), Ember['default'].run.bind(this, 'handleKeyPress'));
     },
 
-    actions: {
-      activeNext: makeKeyboardAction(function () {
-        if (Ember['default'].isNone(this.get('activeCursor'))) {
-          this.set('activeCursor', 0);
-        } else {
-          this.incrementProperty('activeCursor');
-        }
-      }),
+    willDestroyElement: function willDestroyElement() {
+      this.$().off('keydown.' + this.get('elementId'));
+    },
 
-      activePrev: makeKeyboardAction(function () {
-        if (Ember['default'].isNone(this.get('activeCursor'))) {
-          this.set('activeCursor', -1);
-        } else {
-          this.decrementProperty('activeCursor');
-        }
-      }),
+    focusActiveItem: function focusActiveItem() {
+      this.$('[data-itemid=' + this.get('activeItem.itemId') + ']').focus();
+    },
 
-      selectActiveItem: makeKeyboardAction(function () {
-        var item = this.get('activeItem');
-        if (Ember['default'].isPresent(item)) {
-          this.send('selectItem', item);
+    handleKeyPress: function handleKeyPress(e) {
+      var _this = this;
+
+      var actionName = (function () {
+        switch (e.which) {
+          case KEY_DOWN:
+            return 'activeNext';
+          case KEY_UP:
+            return 'activePrev';
+          case KEY_ESC:
+            return 'closeDropdown';
+          case KEY_ENTER:
+            return _this.get('showDropdown') ? 'selectActiveItem' : 'openDropdown';
+          default:
+            return null;
         }
-      })
+      })();
+
+      if (actionName) {
+        e.preventDefault();
+        Ember['default'].run(function () {
+          _this.send(actionName);
+        });
+        this.focusActiveItem();
+        return false;
+      }
+
+      return true;
     }
   });
-
-  exports['default'] = KeyboardSelectPickerComponent;
 
 });
 define('test-select-picker/components/list-picker', ['exports', 'ember', 'ember-cli-select-picker/mixins/select-picker'], function (exports, Ember, SelectPickerMixin) {
@@ -156,14 +111,12 @@ define('test-select-picker/components/list-picker', ['exports', 'ember', 'ember-
 
   var I18nProps = Ember['default'].I18n && Ember['default'].I18n.TranslateableProperties || {};
 
-  var ListPickerComponent = Ember['default'].Component.extend(SelectPickerMixin['default'], I18nProps, {
+  exports['default'] = Ember['default'].Component.extend(SelectPickerMixin['default'], I18nProps, {
     classNames: ['select-picker', 'list-picker'],
     selectAllLabel: 'Select All',
     selectNoneLabel: 'Select None',
     nativeMobile: false
   });
-
-  exports['default'] = ListPickerComponent;
 
 });
 define('test-select-picker/components/select-picker', ['exports', 'ember', 'ember-cli-select-picker/mixins/select-picker'], function (exports, Ember, SelectPickerMixin) {
@@ -172,7 +125,7 @@ define('test-select-picker/components/select-picker', ['exports', 'ember', 'embe
 
   var I18nProps = Ember['default'].I18n && Ember['default'].I18n.TranslateableProperties || {};
 
-  var SelectPickerComponent = Ember['default'].Component.extend(SelectPickerMixin['default'], I18nProps, {
+  exports['default'] = Ember['default'].Component.extend(SelectPickerMixin['default'], I18nProps, {
 
     nothingSelectedMessage: 'Nothing Selected',
     summaryMessage: '%@ items selected',
@@ -214,13 +167,16 @@ define('test-select-picker/components/select-picker', ['exports', 'ember', 'embe
       showHide: function showHide() {
         this.toggleProperty('showDropdown');
       },
+
+      openDropdown: function openDropdown() {
+        this.set('showDropdown', true);
+      },
+
       closeDropdown: function closeDropdown() {
         this.set('showDropdown', false);
       }
     }
   });
-
-  exports['default'] = SelectPickerComponent;
 
 });
 define('test-select-picker/controllers/application', ['exports', 'ember', 'test-select-picker/config/environment'], function (exports, Ember, config) {
@@ -401,7 +357,8 @@ define('test-select-picker/initializers/export-application-global', ['exports', 
 
   exports.initialize = initialize;
 
-  function initialize(container, application) {
+  function initialize() {
+    var application = arguments[1] || arguments[0];
     if (config['default'].exportApplicationGlobal !== false) {
       var value = config['default'].exportApplicationGlobal;
       var globalName;
@@ -424,8 +381,6 @@ define('test-select-picker/initializers/export-application-global', ['exports', 
       }
     }
   }
-
-  ;
 
   exports['default'] = {
     name: 'export-application-global',
@@ -2072,11 +2027,11 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
           "loc": {
             "source": null,
             "start": {
-              "line": 24,
+              "line": 25,
               "column": 4
             },
             "end": {
-              "line": 28,
+              "line": 34,
               "column": 4
             }
           },
@@ -2090,6 +2045,7 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
           var el1 = dom.createTextNode("      ");
           dom.appendChild(el0, el1);
           var el1 = dom.createElement("li");
+          dom.setAttribute(el1,"tabindex","-1");
           var el2 = dom.createTextNode("\n        ");
           dom.appendChild(el1, el2);
           var el2 = dom.createComment("");
@@ -2107,7 +2063,7 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
           return morphs;
         },
         statements: [
-          ["inline","input",[],["type","text","class","search-filter form-control","value",["subexpr","@mut",[["get","searchFilter",["loc",[null,[26,69],[26,81]]]]],[],[]],"focus","preventClosing"],["loc",[null,[26,8],[26,106]]]]
+          ["inline","input",[],["type","text","tabindex","-1","disabled",["subexpr","@mut",[["get","disabled",["loc",[null,[29,25],[29,33]]]]],[],[]],"class","search-filter form-control","value",["subexpr","@mut",[["get","searchFilter",["loc",[null,[31,22],[31,34]]]]],[],[]],"focus","preventClosing"],["loc",[null,[27,8],[32,40]]]]
         ],
         locals: [],
         templates: []
@@ -2121,11 +2077,11 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
             "loc": {
               "source": null,
               "start": {
-                "line": 31,
+                "line": 37,
                 "column": 8
               },
               "end": {
-                "line": 36,
+                "line": 54,
                 "column": 8
               }
             },
@@ -2142,12 +2098,18 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
             dom.setAttribute(el1,"class","btn-group select-all-none btn-block");
             dom.setAttribute(el1,"role","group");
             dom.setAttribute(el1,"aria-label","Select all or none");
+            dom.setAttribute(el1,"tabindex","-1");
             var el2 = dom.createTextNode("\n            ");
             dom.appendChild(el1, el2);
             var el2 = dom.createElement("button");
             dom.setAttribute(el2,"type","button");
             dom.setAttribute(el2,"class","btn btn-default btn-xs");
+            dom.setAttribute(el2,"tabindex","-1");
+            var el3 = dom.createTextNode("\n              ");
+            dom.appendChild(el2, el3);
             var el3 = dom.createComment("");
+            dom.appendChild(el2, el3);
+            var el3 = dom.createTextNode("\n            ");
             dom.appendChild(el2, el3);
             dom.appendChild(el1, el2);
             var el2 = dom.createTextNode("\n            ");
@@ -2155,7 +2117,12 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
             var el2 = dom.createElement("button");
             dom.setAttribute(el2,"type","button");
             dom.setAttribute(el2,"class","btn btn-default btn-xs");
+            dom.setAttribute(el2,"tabindex","-1");
+            var el3 = dom.createTextNode("\n              ");
+            dom.appendChild(el2, el3);
             var el3 = dom.createComment("");
+            dom.appendChild(el2, el3);
+            var el3 = dom.createTextNode("\n            ");
             dom.appendChild(el2, el3);
             dom.appendChild(el1, el2);
             var el2 = dom.createTextNode("\n          ");
@@ -2169,18 +2136,22 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
             var element5 = dom.childAt(fragment, [1]);
             var element6 = dom.childAt(element5, [1]);
             var element7 = dom.childAt(element5, [3]);
-            var morphs = new Array(4);
-            morphs[0] = dom.createElementMorph(element6);
-            morphs[1] = dom.createMorphAt(element6,0,0);
-            morphs[2] = dom.createElementMorph(element7);
-            morphs[3] = dom.createMorphAt(element7,0,0);
+            var morphs = new Array(6);
+            morphs[0] = dom.createAttrMorph(element6, 'disabled');
+            morphs[1] = dom.createElementMorph(element6);
+            morphs[2] = dom.createMorphAt(element6,1,1);
+            morphs[3] = dom.createAttrMorph(element7, 'disabled');
+            morphs[4] = dom.createElementMorph(element7);
+            morphs[5] = dom.createMorphAt(element7,1,1);
             return morphs;
           },
           statements: [
-            ["element","action",["selectAllNone","unselectedContentList"],[],["loc",[null,[33,65],[33,115]]]],
-            ["content","selectAllLabel",["loc",[null,[33,116],[33,134]]]],
-            ["element","action",["selectAllNone","selectedContentList"],[],["loc",[null,[34,65],[34,113]]]],
-            ["content","selectNoneLabel",["loc",[null,[34,114],[34,133]]]]
+            ["attribute","disabled",["get","disabled",["loc",[null,[40,31],[40,39]]]]],
+            ["element","action",["selectAllNone","unselectedContentList"],[],["loc",[null,[42,20],[42,70]]]],
+            ["content","selectAllLabel",["loc",[null,[44,14],[44,32]]]],
+            ["attribute","disabled",["get","disabled",["loc",[null,[47,31],[47,39]]]]],
+            ["element","action",["selectAllNone","selectedContentList"],[],["loc",[null,[49,20],[49,68]]]],
+            ["content","selectNoneLabel",["loc",[null,[51,14],[51,33]]]]
           ],
           locals: [],
           templates: []
@@ -2193,11 +2164,11 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
             "loc": {
               "source": null,
               "start": {
-                "line": 36,
+                "line": 54,
                 "column": 8
               },
               "end": {
-                "line": 41,
+                "line": 59,
                 "column": 8
               }
             },
@@ -2213,6 +2184,7 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
             var el1 = dom.createElement("button");
             dom.setAttribute(el1,"type","button");
             dom.setAttribute(el1,"class","btn btn-default btn-xs btn-block");
+            dom.setAttribute(el1,"tabindex","-1");
             var el2 = dom.createTextNode("\n            ");
             dom.appendChild(el1, el2);
             var el2 = dom.createComment("");
@@ -2220,6 +2192,7 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
             var el2 = dom.createTextNode("\n            ");
             dom.appendChild(el1, el2);
             var el2 = dom.createElement("span");
+            dom.setAttribute(el2,"tabindex","-1");
             dom.appendChild(el1, el2);
             var el2 = dom.createTextNode("\n          ");
             dom.appendChild(el1, el2);
@@ -2238,9 +2211,9 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
             return morphs;
           },
           statements: [
-            ["element","action",["toggleSelectAllNone"],[],["loc",[null,[37,73],[37,105]]]],
-            ["content","selectAllNoneLabel",["loc",[null,[38,12],[38,34]]]],
-            ["attribute","class",["concat",["check-mark glyphicon ",["get","glyphiconClass",["loc",[null,[39,48],[39,62]]]]]]]
+            ["element","action",["toggleSelectAllNone"],[],["loc",[null,[55,73],[55,105]]]],
+            ["content","selectAllNoneLabel",["loc",[null,[56,12],[56,34]]]],
+            ["attribute","class",["concat",["check-mark glyphicon ",["get","glyphiconClass",["loc",[null,[57,48],[57,62]]]]]]]
           ],
           locals: [],
           templates: []
@@ -2252,11 +2225,11 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
           "loc": {
             "source": null,
             "start": {
-              "line": 29,
+              "line": 35,
               "column": 4
             },
             "end": {
-              "line": 43,
+              "line": 61,
               "column": 4
             }
           },
@@ -2270,6 +2243,7 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
           var el1 = dom.createTextNode("      ");
           dom.appendChild(el0, el1);
           var el1 = dom.createElement("li");
+          dom.setAttribute(el1,"tabindex","-1");
           var el2 = dom.createTextNode("\n");
           dom.appendChild(el1, el2);
           var el2 = dom.createComment("");
@@ -2287,7 +2261,7 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
           return morphs;
         },
         statements: [
-          ["block","if",[["get","splitAllNoneButtons",["loc",[null,[31,14],[31,33]]]]],[],0,1,["loc",[null,[31,8],[41,15]]]]
+          ["block","if",[["get","splitAllNoneButtons",["loc",[null,[37,14],[37,33]]]]],[],0,1,["loc",[null,[37,8],[59,15]]]]
         ],
         locals: [],
         templates: [child0, child1]
@@ -2301,12 +2275,12 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
             "loc": {
               "source": null,
               "start": {
-                "line": 45,
+                "line": 63,
                 "column": 6
               },
               "end": {
-                "line": 45,
-                "column": 92
+                "line": 63,
+                "column": 106
               }
             },
             "moduleName": "test-select-picker/templates/components/select-picker.hbs"
@@ -2319,6 +2293,7 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
             var el1 = dom.createElement("li");
             dom.setAttribute(el1,"class","divider");
             dom.setAttribute(el1,"role","presentation");
+            dom.setAttribute(el1,"tabindex","-1");
             dom.appendChild(el0, el1);
             return el0;
           },
@@ -2337,12 +2312,12 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
             "loc": {
               "source": null,
               "start": {
-                "line": 46,
+                "line": 64,
                 "column": 6
               },
               "end": {
-                "line": 46,
-                "column": 91
+                "line": 64,
+                "column": 105
               }
             },
             "moduleName": "test-select-picker/templates/components/select-picker.hbs"
@@ -2355,6 +2330,7 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
             var el1 = dom.createElement("li");
             dom.setAttribute(el1,"class","dropdown-header");
             dom.setAttribute(el1,"role","presentation");
+            dom.setAttribute(el1,"tabindex","-1");
             var el2 = dom.createComment("");
             dom.appendChild(el1, el2);
             dom.appendChild(el0, el1);
@@ -2366,7 +2342,7 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
             return morphs;
           },
           statements: [
-            ["content","group.name",["loc",[null,[46,72],[46,86]]]]
+            ["content","group.name",["loc",[null,[64,86],[64,100]]]]
           ],
           locals: [],
           templates: []
@@ -2379,11 +2355,11 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
             "loc": {
               "source": null,
               "start": {
-                "line": 47,
+                "line": 65,
                 "column": 6
               },
               "end": {
-                "line": 54,
+                "line": 72,
                 "column": 6
               }
             },
@@ -2398,11 +2374,11 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
             dom.appendChild(el0, el1);
             var el1 = dom.createElement("li");
             dom.setAttribute(el1,"role","presentation");
+            dom.setAttribute(el1,"tabindex","-1");
             var el2 = dom.createTextNode("\n          ");
             dom.appendChild(el1, el2);
             var el2 = dom.createElement("a");
             dom.setAttribute(el2,"role","menuitem");
-            dom.setAttribute(el2,"tabindex","-1");
             var el3 = dom.createTextNode("\n            ");
             dom.appendChild(el2, el3);
             var el3 = dom.createComment("");
@@ -2425,18 +2401,22 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
             var element0 = dom.childAt(fragment, [1]);
             var element1 = dom.childAt(element0, [1]);
             var element2 = dom.childAt(element1, [3]);
-            var morphs = new Array(4);
+            var morphs = new Array(6);
             morphs[0] = dom.createAttrMorph(element0, 'class');
-            morphs[1] = dom.createElementMorph(element1);
-            morphs[2] = dom.createMorphAt(element1,1,1);
-            morphs[3] = dom.createAttrMorph(element2, 'class');
+            morphs[1] = dom.createAttrMorph(element1, 'data-itemid');
+            morphs[2] = dom.createAttrMorph(element1, 'tabindex');
+            morphs[3] = dom.createElementMorph(element1);
+            morphs[4] = dom.createMorphAt(element1,1,1);
+            morphs[5] = dom.createAttrMorph(element2, 'class');
             return morphs;
           },
           statements: [
-            ["attribute","class",["concat",[["subexpr","if",[["get","item.active",["loc",[null,[48,44],[48,55]]]],"active"],[],["loc",[null,[48,39],[48,66]]]]," ",["subexpr","if",[["get","item.selected",["loc",[null,[48,72],[48,85]]]],"selected"],[],["loc",[null,[48,67],[48,98]]]]]]],
-            ["element","action",["selectItem",["get","item",["loc",[null,[49,65],[49,69]]]]],[],["loc",[null,[49,43],[49,71]]]],
-            ["content","item.label",["loc",[null,[50,12],[50,26]]]],
-            ["attribute","class",["concat",["glyphicon glyphicon-ok check-mark ",["subexpr","if",[["get","item.selected",["loc",[null,[51,64],[51,77]]]],"","hidden"],[],["loc",[null,[51,59],[51,91]]]]]]]
+            ["attribute","class",["concat",[["subexpr","if",[["get","disabled",["loc",[null,[66,58],[66,66]]]],"disabled"],[],["loc",[null,[66,53],[66,79]]]]," ",["subexpr","if",[["get","item.active",["loc",[null,[66,85],[66,96]]]],"active"],[],["loc",[null,[66,80],[66,107]]]]," ",["subexpr","if",[["get","item.selected",["loc",[null,[66,113],[66,126]]]],"selected"],[],["loc",[null,[66,108],[66,139]]]]]]],
+            ["attribute","data-itemid",["get","item.itemId",["loc",[null,[67,43],[67,54]]]]],
+            ["attribute","tabindex",["concat",[["subexpr","if",[["get","item.active",["loc",[null,[67,72],[67,83]]]],"0","-1"],[],["loc",[null,[67,67],[67,94]]]]]]],
+            ["element","action",["selectItem",["get","item",["loc",[null,[67,118],[67,122]]]]],[],["loc",[null,[67,96],[67,124]]]],
+            ["content","item.label",["loc",[null,[68,12],[68,26]]]],
+            ["attribute","class",["concat",["glyphicon glyphicon-ok check-mark ",["subexpr","if",[["get","item.selected",["loc",[null,[69,64],[69,77]]]],"","hidden"],[],["loc",[null,[69,59],[69,91]]]]]]]
           ],
           locals: ["item"],
           templates: []
@@ -2448,11 +2428,11 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
           "loc": {
             "source": null,
             "start": {
-              "line": 44,
+              "line": 62,
               "column": 4
             },
             "end": {
-              "line": 55,
+              "line": 73,
               "column": 4
             }
           },
@@ -2486,9 +2466,9 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
           return morphs;
         },
         statements: [
-          ["block","unless",[["get","group.items.firstObject.first",["loc",[null,[45,16],[45,45]]]]],[],0,null,["loc",[null,[45,6],[45,103]]]],
-          ["block","if",[["get","group.name",["loc",[null,[46,12],[46,22]]]]],[],1,null,["loc",[null,[46,6],[46,98]]]],
-          ["block","each",[["get","group.items",["loc",[null,[47,14],[47,25]]]]],[],2,null,["loc",[null,[47,6],[54,15]]]]
+          ["block","unless",[["get","group.items.firstObject.first",["loc",[null,[63,16],[63,45]]]]],[],0,null,["loc",[null,[63,6],[63,117]]]],
+          ["block","if",[["get","group.name",["loc",[null,[64,12],[64,22]]]]],[],1,null,["loc",[null,[64,6],[64,112]]]],
+          ["block","each",[["get","group.items",["loc",[null,[65,14],[65,25]]]]],[],2,null,["loc",[null,[65,6],[72,15]]]]
         ],
         locals: ["group"],
         templates: [child0, child1, child2]
@@ -2504,7 +2484,7 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
             "column": 0
           },
           "end": {
-            "line": 58,
+            "line": 76,
             "column": 0
           }
         },
@@ -2520,15 +2500,18 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
         var el1 = dom.createTextNode("\n");
         dom.appendChild(el0, el1);
         var el1 = dom.createElement("div");
+        dom.setAttribute(el1,"tabindex","0");
         var el2 = dom.createTextNode("\n  ");
         dom.appendChild(el1, el2);
         var el2 = dom.createElement("button");
         dom.setAttribute(el2,"type","button");
+        dom.setAttribute(el2,"tabindex","-1");
         dom.setAttribute(el2,"aria-expanded","true");
         var el3 = dom.createTextNode("\n    ");
         dom.appendChild(el2, el3);
         var el3 = dom.createElement("span");
         dom.setAttribute(el3,"class","pull-left");
+        dom.setAttribute(el3,"tabindex","-1");
         var el4 = dom.createTextNode("\n      ");
         dom.appendChild(el3, el4);
         var el4 = dom.createComment("");
@@ -2536,6 +2519,7 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
         var el4 = dom.createTextNode("\n      ");
         dom.appendChild(el3, el4);
         var el4 = dom.createElement("span");
+        dom.setAttribute(el4,"tabindex","-1");
         var el5 = dom.createComment("");
         dom.appendChild(el4, el5);
         dom.appendChild(el3, el4);
@@ -2550,9 +2534,11 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
         var el2 = dom.createElement("ul");
         dom.setAttribute(el2,"class","dropdown-menu");
         dom.setAttribute(el2,"role","menu");
+        dom.setAttribute(el2,"tabindex","-1");
         var el3 = dom.createTextNode("\n    ");
         dom.appendChild(el2, el3);
         var el3 = dom.createElement("li");
+        dom.setAttribute(el3,"tabindex","-1");
         var el4 = dom.createTextNode("\n      ");
         dom.appendChild(el3, el4);
         var el4 = dom.createComment("");
@@ -2584,39 +2570,37 @@ define('test-select-picker/templates/components/select-picker', ['exports'], fun
         var element11 = dom.childAt(element10, [1]);
         var element12 = dom.childAt(element11, [3]);
         var element13 = dom.childAt(element9, [3]);
-        var morphs = new Array(14);
+        var morphs = new Array(13);
         morphs[0] = dom.createMorphAt(fragment,0,0,contextualElement);
         morphs[1] = dom.createAttrMorph(element9, 'class');
         morphs[2] = dom.createAttrMorph(element10, 'class');
         morphs[3] = dom.createAttrMorph(element10, 'id');
-        morphs[4] = dom.createAttrMorph(element10, 'disabled');
-        morphs[5] = dom.createElementMorph(element10);
-        morphs[6] = dom.createMorphAt(element11,1,1);
-        morphs[7] = dom.createAttrMorph(element12, 'class');
-        morphs[8] = dom.createMorphAt(element12,0,0);
-        morphs[9] = dom.createAttrMorph(element13, 'aria-labelledby');
-        morphs[10] = dom.createMorphAt(dom.childAt(element13, [1]),1,1);
-        morphs[11] = dom.createMorphAt(element13,3,3);
-        morphs[12] = dom.createMorphAt(element13,4,4);
-        morphs[13] = dom.createMorphAt(element13,5,5);
+        morphs[4] = dom.createElementMorph(element10);
+        morphs[5] = dom.createMorphAt(element11,1,1);
+        morphs[6] = dom.createAttrMorph(element12, 'class');
+        morphs[7] = dom.createMorphAt(element12,0,0);
+        morphs[8] = dom.createAttrMorph(element13, 'aria-labelledby');
+        morphs[9] = dom.createMorphAt(dom.childAt(element13, [1]),1,1);
+        morphs[10] = dom.createMorphAt(element13,3,3);
+        morphs[11] = dom.createMorphAt(element13,4,4);
+        morphs[12] = dom.createMorphAt(element13,5,5);
         dom.insertBoundary(fragment, 0);
         return morphs;
       },
       statements: [
         ["block","if",[["get","nativeMobile",["loc",[null,[1,6],[1,18]]]]],[],0,null,["loc",[null,[1,0],[6,7]]]],
         ["attribute","class",["concat",["bs-select dropdown ",["subexpr","if",[["get","nativeMobile",["loc",[null,[8,36],[8,48]]]],"hidden-xs"],[],["loc",[null,[8,31],[8,62]]]]," ",["subexpr","if",[["get","disabled",["loc",[null,[8,68],[8,76]]]],"disabled"],[],["loc",[null,[8,63],[8,89]]]]," ",["subexpr","if",[["get","showDropdown",["loc",[null,[8,95],[8,107]]]],"open"],[],["loc",[null,[8,90],[8,116]]]]]]],
-        ["attribute","class",["concat",["btn dropdown-toggle ",["get","buttonClass",["loc",[null,[11,39],[11,50]]]]]]],
-        ["attribute","id",["get","menuButtonId",["loc",[null,[12,15],[12,27]]]]],
-        ["attribute","disabled",["get","disabled",["loc",[null,[13,21],[13,29]]]]],
-        ["element","action",["showHide"],[],["loc",[null,[10,10],[10,31]]]],
-        ["content","selectionSummary",["loc",[null,[16,6],[16,26]]]],
-        ["attribute","class",["subexpr","if",[["get","selectionBadge",["loc",[null,[17,23],[17,37]]]],"badge","caret"],[],["loc",[null,[17,18],[17,55]]]]],
-        ["content","selectionBadge",["loc",[null,[17,56],[17,74]]]],
-        ["attribute","aria-labelledby",["get","menuButtonId",["loc",[null,[20,58],[20,70]]]]],
-        ["content","yield",["loc",[null,[22,6],[22,15]]]],
-        ["block","if",[["get","liveSearch",["loc",[null,[24,10],[24,20]]]]],[],1,null,["loc",[null,[24,4],[28,11]]]],
-        ["block","if",[["get","multiple",["loc",[null,[29,10],[29,18]]]]],[],2,null,["loc",[null,[29,4],[43,11]]]],
-        ["block","each",[["get","nestedGroupContentList",["loc",[null,[44,12],[44,34]]]]],[],3,null,["loc",[null,[44,4],[55,13]]]]
+        ["attribute","class",["concat",["btn dropdown-toggle ",["get","buttonClass",["loc",[null,[12,39],[12,50]]]]," ",["subexpr","if",[["get","disabled",["loc",[null,[12,58],[12,66]]]],"disabled"],[],["loc",[null,[12,53],[12,79]]]]]]],
+        ["attribute","id",["get","menuButtonId",["loc",[null,[13,15],[13,27]]]]],
+        ["element","action",["showHide"],[],["loc",[null,[11,10],[11,31]]]],
+        ["content","selectionSummary",["loc",[null,[17,6],[17,26]]]],
+        ["attribute","class",["subexpr","if",[["get","selectionBadge",["loc",[null,[18,23],[18,37]]]],"badge","caret"],[],["loc",[null,[18,18],[18,55]]]]],
+        ["content","selectionBadge",["loc",[null,[18,70],[18,88]]]],
+        ["attribute","aria-labelledby",["get","menuButtonId",["loc",[null,[21,58],[21,70]]]]],
+        ["content","yield",["loc",[null,[23,6],[23,15]]]],
+        ["block","if",[["get","liveSearch",["loc",[null,[25,10],[25,20]]]]],[],1,null,["loc",[null,[25,4],[34,11]]]],
+        ["block","if",[["get","multiple",["loc",[null,[35,10],[35,18]]]]],[],2,null,["loc",[null,[35,4],[61,11]]]],
+        ["block","each",[["get","nestedGroupContentList",["loc",[null,[62,12],[62,34]]]]],[],3,null,["loc",[null,[62,4],[73,13]]]]
       ],
       locals: [],
       templates: [child0, child1, child2, child3]
@@ -3735,7 +3719,13 @@ define('test-select-picker/templates/keyboard', ['exports'], function (exports) 
         var el5 = dom.createTextNode("\n        ");
         dom.appendChild(el4, el5);
         var el5 = dom.createElement("td");
-        var el6 = dom.createTextNode("Select/Unselect item the cursor is on");
+        var el6 = dom.createTextNode("Open the dropdown list ");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createElement("em");
+        var el7 = dom.createTextNode("or");
+        dom.appendChild(el6, el7);
+        dom.appendChild(el5, el6);
+        var el6 = dom.createTextNode(" Select/Unselect item the cursor is on");
         dom.appendChild(el5, el6);
         dom.appendChild(el4, el5);
         var el5 = dom.createTextNode("\n      ");
@@ -3749,12 +3739,6 @@ define('test-select-picker/templates/keyboard', ['exports'], function (exports) 
         var el5 = dom.createElement("td");
         var el6 = dom.createElement("kbd");
         var el7 = dom.createTextNode("Down");
-        dom.appendChild(el6, el7);
-        dom.appendChild(el5, el6);
-        var el6 = dom.createTextNode(" or ");
-        dom.appendChild(el5, el6);
-        var el6 = dom.createElement("kbd");
-        var el7 = dom.createTextNode("Tab");
         dom.appendChild(el6, el7);
         dom.appendChild(el5, el6);
         dom.appendChild(el4, el5);
@@ -3781,16 +3765,6 @@ define('test-select-picker/templates/keyboard', ['exports'], function (exports) 
         var el5 = dom.createElement("td");
         var el6 = dom.createElement("kbd");
         var el7 = dom.createTextNode("Up");
-        dom.appendChild(el6, el7);
-        dom.appendChild(el5, el6);
-        var el6 = dom.createTextNode(" or ");
-        dom.appendChild(el5, el6);
-        var el6 = dom.createElement("kbd");
-        var el7 = dom.createTextNode("Shift");
-        dom.appendChild(el6, el7);
-        dom.appendChild(el5, el6);
-        var el6 = dom.createElement("kbd");
-        var el7 = dom.createTextNode("Tab");
         dom.appendChild(el6, el7);
         dom.appendChild(el5, el6);
         dom.appendChild(el4, el5);
@@ -5063,7 +5037,7 @@ catch(err) {
 if (runningTests) {
   require("test-select-picker/tests/test-helper");
 } else {
-  require("test-select-picker/app")["default"].create({"addonVersion":"2.2.0","name":"test-select-picker","version":"0.0.0+fa9a2ec9"});
+  require("test-select-picker/app")["default"].create({"addonVersion":"2.3.0","name":"test-select-picker","version":"0.0.0+9bf80f49"});
 }
 
 /* jshint ignore:end */
