@@ -286,14 +286,16 @@ default Ember.Mixin.create({
         this.toggleSelection(selected.get('item'));
       } else if (max) {
         var selection = Ember.A(this.get('selection'));
-        if (!_contains(selection, selected) && max === selection.length) {
+        var item = selected.get('item');
+        var isSelected = _contains(selection, item);
+        if (!isSelected && max === selection.length) {
           return this.set('keepDropdownOpen', true);
         }
-        if (max !== selection.length + 1) {
+        // if not the last item to select or deselect
+        if ((selection.length !== 1 && isSelected) || (max !== selection.length + 1 && !isSelected)) {
           this.set('keepDropdownOpen', true);
         }
         this.toggleSelection(selected.get('item'));
-
       } else {
         this.setProperties({
           // TODO: value will be removed in the future
