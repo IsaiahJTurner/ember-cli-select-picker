@@ -19,15 +19,15 @@ const emberArrayFunc = function(method) {
   };
 };
 const _contains = emberArrayFunc('contains');
-const _mapBy    = emberArrayFunc('mapBy');
+const _mapBy = emberArrayFunc('mapBy');
 const _filterBy = emberArrayFunc('filterBy');
-const _findBy   = emberArrayFunc('findBy');
-const _uniq     = emberArrayFunc('uniq');
-const _compact  = emberArrayFunc('compact');
+const _findBy = emberArrayFunc('findBy');
+const _uniq = emberArrayFunc('uniq');
+const _compact = emberArrayFunc('compact');
 
 const selectOneOf = function(someSelected,
-                             allSelected,
-                             noneSelected) {
+  allSelected,
+  noneSelected) {
   return Ember.computed(
     'hasSelectedItems', 'allItemsSelected',
     function() {
@@ -43,22 +43,34 @@ const selectOneOf = function(someSelected,
 };
 
 const selectOneOfValue = function(someSelectedValue,
-                                  allSelectedValue,
-                                  noneSelectedValue) {
+  allSelectedValue,
+  noneSelectedValue) {
   return selectOneOf(
-    function() { return someSelectedValue; },
-    function() { return allSelectedValue; },
-    function() { return noneSelectedValue; }
+    function() {
+      return someSelectedValue;
+    },
+    function() {
+      return allSelectedValue;
+    },
+    function() {
+      return noneSelectedValue;
+    }
   );
 };
 
 const selectOneOfProperty = function(someSelectedKey,
-                                     allSelectedKey,
-                                     noneSelectedKey) {
+  allSelectedKey,
+  noneSelectedKey) {
   return selectOneOf(
-    function() { return this.get(someSelectedKey); },
-    function() { return this.get(allSelectedKey); },
-    function() { return this.get(noneSelectedKey); }
+    function() {
+      return this.get(someSelectedKey);
+    },
+    function() {
+      return this.get(allSelectedKey);
+    },
+    function() {
+      return this.get(noneSelectedKey);
+    }
   );
 };
 
@@ -69,11 +81,17 @@ const isAdvancedSearch = function(liveSearch) {
   );
 };
 
-export default Ember.Mixin.create({
-  liveSearch:   false,
+export
+default Ember.Mixin.create({
+  liveSearch: false,
   showDropdown: false,
   promptMessage: 'Please select an option',
   prompt: Ember.computed.bool('promptMessage'),
+
+  canSelectAll: Ember.computed('multiple',
+    function() {
+      return this.get("multiple") && !this.get("max");
+    }),
 
   showNativePrompt: Ember.computed(
     'multiple', 'prompt',
@@ -118,11 +136,11 @@ export default Ember.Mixin.create({
           const group = groupPath ? Ember.get(item, groupPath) : null;
           if (searchMatcher(group) || searchMatcher(label)) {
             return Ember.Object.create({
-              item:     item,
-              itemId:   index,
-              group:    group,
-              label:    label,
-              value:    value,
+              item: item,
+              itemId: index,
+              group: group,
+              label: label,
+              value: value,
               selected: _contains(selection, value)
             });
           } else {
@@ -162,9 +180,9 @@ export default Ember.Mixin.create({
     return Ember.get(obj, this.contentPathName(pathName));
   },
 
-  selectedContentList:   Ember.computed.filterBy('contentList', 'selected'),
+  selectedContentList: Ember.computed.filterBy('contentList', 'selected'),
   unselectedContentList: Ember.computed.setDiff('contentList', 'selectedContentList'),
-  hasSelectedItems:      Ember.computed.gt('selection.length', 0),
+  hasSelectedItems: Ember.computed.gt('selection.length', 0),
   allItemsSelected: Ember.computed(
     'selection.length', 'content.length',
     function() {
@@ -172,21 +190,21 @@ export default Ember.Mixin.create({
     }
   ),
 
-  glyphiconClass:     selectOneOfValue('glyphicon-minus', 'glyphicon-ok', ''),
+  glyphiconClass: selectOneOfValue('glyphicon-minus', 'glyphicon-ok', ''),
   selectAllNoneLabel: selectOneOfProperty('selectNoneLabel', 'selectNoneLabel', 'selectAllLabel'),
 
-  makeSearchMatcher: function () {
+  makeSearchMatcher: function() {
     var searchFilter = this.get('searchFilter');
     // item can be null, string, or SafeString.
     // SafeString does not have toLowerCase() so use toString() to
     // normalize it.
     if (Ember.isEmpty(searchFilter)) {
-      return function () {
+      return function() {
         return true; // Show all
       };
     } else if (isAdvancedSearch(this.get('liveSearch'))) {
       searchFilter = new RegExp(searchFilter.split('').join('.*'), 'i');
-      return function (item) {
+      return function(item) {
         if (Ember.isNone(item)) {
           return false;
         } else {
@@ -195,7 +213,7 @@ export default Ember.Mixin.create({
       };
     } else {
       searchFilter = searchFilter.toLowerCase();
-      return function (item) {
+      return function(item) {
         if (Ember.isNone(item)) {
           return false;
         } else {
@@ -262,9 +280,20 @@ export default Ember.Mixin.create({
 
   selectAnItem: function(selected) {
     if (!this.get('disabled')) {
-      if (this.get('multiple')) {
+      var max = this.get("max");
+      if (this.get('multiple') && !max) {
         this.set('keepDropdownOpen', true);
         this.toggleSelection(selected.get('item'));
+      } else if (max) {
+        var selection = Ember.A(this.get('selection'));
+        if (!_contains(selection, selected) && max === selection.length) {
+          return this.set('keepDropdownOpen', true);
+        }
+        if (max !== selection.length + 1) {
+          this.set('keepDropdownOpen', true);
+        }
+        this.toggleSelection(selected.get('item'));
+
       } else {
         this.setProperties({
           // TODO: value will be removed in the future
@@ -284,21 +313,27 @@ export default Ember.Mixin.create({
 
   actions: {
     selectItem(selected) {
-      if (this.get('disabled')) { return true; }
+      if (this.get('disabled')) {
+        return true;
+      }
       this.selectAnItem(selected);
       this.sendChangeAction();
       return false;
     },
 
     selectAllNone(listName) {
-      if (this.get('disabled')) { return true; }
+      if (this.get('disabled')) {
+        return true;
+      }
       this.get(listName).forEach(Ember.run.bind(this, this.selectAnItem));
       this.sendChangeAction();
       return false;
     },
 
     selectByValue() {
-      if (this.get('disabled')) { return true; }
+      if (this.get('disabled')) {
+        return true;
+      }
       const hasPrompt = Ember.isPresent(this.get('prompt'));
       const contentList = this.get('contentList');
       const selectedValues = Ember.makeArray(this.$('select').val());
@@ -307,7 +342,10 @@ export default Ember.Mixin.create({
           return selectedValues.indexOf(item.get('value')) !== -1;
         }));
       } else if (hasPrompt && Ember.isEmpty(selectedValues[0])) {
-        this.setProperties({value: null, selection: null});
+        this.setProperties({
+          value: null,
+          selection: null
+        });
       } else {
         this.send('selectItem', _findBy(contentList, 'value', selectedValues[0]));
       }
